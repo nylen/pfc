@@ -13,6 +13,7 @@ var money = wesabe.lang.money;
 var DAY = "Day";
 var FIRST_DAY_OF_WEEK = 1; // NOTE: BRCM uses Monday as the first day of the week, so we follow suit.
 var MONTH = "Month";
+var BIWEEK = "Week"; // TODO: "Pay period"?  Must also modify js for wesabe.lang.date
 var WEEK = "Week";
 
 // accounts for a parsing bug with processing.js
@@ -449,7 +450,7 @@ var rangeOffset = 0;
 var intervals = [
   {key: "0", shortLabel: '1m', label: 'past month', timeAgoInDays: 1, unit: DAY, brcmSummary: 'daily', unique: true},
   {key: "1", shortLabel: '3m', label: 'past 3 months', timeAgoInDays: 12, unit: WEEK, brcmSummary: 'weekly', unique: true},
-  {key: "2", shortLabel: '6m', label: 'past 6 months', timeAgoInDays: 6, unit: MONTH, brcmSummary: 'monthly', unique: false},
+  {key: "2", shortLabel: '6m', label: 'past 6 months', timeAgoInDays: 26, unit: BIWEEK, brcmSummary: 'biweekly', unique: false},
   {key: "3", shortLabel: '1y', label: 'past 12 months', timeAgoInDays: 12, unit: MONTH, brcmSummary: 'monthly', unique: true}
 ];
 
