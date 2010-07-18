@@ -10,6 +10,8 @@ class UploadsController < ApplicationController
   WEB_UPLOADER_CLIENT_VERSION = '1.1'
 
   def index
+    debugger
+    
     if params[:account_id]
       if @account = current_user.account(params[:account_id])
         @uploads = @account.uploads.reject {|u| u.txaction_count_for_account(@account) == 0}
@@ -95,6 +97,8 @@ class UploadsController < ApplicationController
   end
 
   def create
+    debugger
+    
     return unless financial_inst
 
     @need_more_info = false
