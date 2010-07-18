@@ -74,6 +74,10 @@ class Account < ActiveRecord::Base
       first
   end
 
+  def self.find_by_uri(uri)
+    find_by_id_for_user(uri[%r{^/accounts/([^/]+)$}, 1])
+  end
+
   # Return last 4 word characters of account number.
   # If a regex is provided, use that to find the "last 4" digits. Up to 6 characters
   # (the size of the accounts.account_number column) can be stored if a regex is provided
@@ -153,6 +157,10 @@ class Account < ActiveRecord::Base
   # financial_inst.name, since some account types (just cash accounts right now) don't have an FI
   def financial_inst_name
     financial_inst.name if financial_inst
+  end
+
+  def wesabe_id
+    financial_inst.wesabe_id if financial_inst
   end
 
   def new_txaction
