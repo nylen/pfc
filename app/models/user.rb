@@ -156,29 +156,13 @@ class User < ActiveRecord::Base
 
   # change the user's password
   def change_password!(newpass)
-    old_account_key = account_key.dup if account_key
     User.transaction do
       logger.debug("changing password for user #{uid}")
       self.password = newpass
       self.password_confirmation = newpass
-      self.account_key = generate_account_key(newpass)
       @new_password = true
       @changed_password = true
       save!
-      # update accounts
-      [Account, AccountCred].each do |klass|
-        klass.update_all(["account_key = ?", account_key], ["account_key = ?", old_account_key])
-      end
-      # update dir where your statements are stored
-      unless old_account_key.blank?
-        old_statement_dir = Upload.statement_dir(old_account_key)
-        new_statement_dir = Upload.statement_dir(account_key)
-        if File.exists?(old_statement_dir) && old_statement_dir != new_statement_dir
-          FileUtils.mkdir_p(new_statement_dir)
-          FileUtils.mv(Dir.glob(File.join(old_statement_dir, "*")), new_statement_dir)
-          FileUtils.rmdir(old_statement_dir)
-        end
-      end
     end
   end
 
@@ -187,7 +171,7 @@ class User < ActiveRecord::Base
   # recommendations and goals are preserved.
   def destroy
     # delete accounts, txactions, account_balances, accounts_uploads
-    accounts.each {|a| a.send_later(:destroy)}
+    accounts.each {|a| a.delay.destroy }
 
     # destroy all associations that should be destroyed
     self.class.reflect_on_all_associations.each do |a|

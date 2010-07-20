@@ -75,12 +75,6 @@ describe TestController, :type => :controller do
           get :authenticated_action
           controller.session[:intended_uri].should be_nil
         end
-
-        it "should not record the intended url for /user/ping" do
-          request.stub!(:fullpath).and_return("/user/ping")
-          get :authenticated_action
-          controller.session[:intended_uri].should be_nil
-        end
       end
 
       context "without a member cookie" do
@@ -106,12 +100,12 @@ end
 describe TestController, :type => :controller do
   describe Authentication::ControllerMethods, "included" do
 
-    before(:each) do
+    before do
       @user = User.make
-      request.session[:user] = @user.id
+      session[:user] = @user.id
     end
 
-    after(:each) do
+    after do
       @user.destroy
     end
 
@@ -160,6 +154,5 @@ describe TestController, :type => :controller do
         response.should redirect_to(login_url)
       end
     end
-
   end
 end
