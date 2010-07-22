@@ -309,14 +309,7 @@ class OFX2Importer
 
         # try to parse the date
         begin
-          # REVIEW: we've decided that it's probably better to use Date.parse here and
-          # ignore the time component of the date posted, since timezone differences could lead to the date being
-          # displayed as a day earlier or later than what the bank displays on its own site. However, if we change
-          # this we'll generate a lot of duplicate txactions, since the date_posted is used in the wesabe_txid. A
-          # migration might be out of the question, since we don't know the original timezones of the dates in the
-          # database; we'd have to go back and parse it out of the original statement, which is simply not realistic
-          # for 8 million transactions. So we're punting for now. :(
-          txaction.fi_date_posted = Time.parse(txdata[:date_posted])
+          txaction.fi_date_posted = Date.parse(txdata[:date_posted])
 
           # Set the date_posted to the unadjusted date so that it accurately reflects what the bank thinks the
           # date is. We can only do this for FIs that have the date_adjusted flag set to true, which indicates that

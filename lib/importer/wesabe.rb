@@ -221,9 +221,17 @@ class Importer
           elsif datum['wesabe_txid'].respond_to?(:split)
             # since the wesabe txid is based partly on the account,
             # we need to handle it specially.
-            txaction.wesabe_txid = [account.id, *datum['wesabe_txid'].split(':')[1..-1]].join(':')
+            
+            # also rewrite the date portion of wesabe_txid to avoid duplicate
+            # txactions when importing an ofx later.
+            # TODO: should something similar be done for FIs with good_txid?
+            txaction.wesabe_txid = [
+              account.id,
+              txaction.fi_date_posted.strftime("%Y%m%d"),
+              *datum['wesabe_txid'].split(':')[2..-1]
+            ].join(':')
           end
-
+          
           txaction.save(:validate => false)
           import_taggings(txaction, datum['taggings'] || [])
           import_attachments(datum['attachments'] || []).each do |attachment|
