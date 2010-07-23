@@ -5,7 +5,7 @@
   var shared = wesabe.views.shared;
   var preferences = wesabe.data.preferences;
 
-  var TRANSACTIONS_PER_PAGE = 30;
+  var TRANSACTIONS_PER_PAGE = 100;
 
   wesabe.provide('views.pages.accounts', function() {
     this.init();

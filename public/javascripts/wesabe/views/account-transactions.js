@@ -1,6 +1,6 @@
 jQuery(function($) {
   var root = $('#account-transactions');
-  var TRANSACTIONS_PER_PAGE = 30;
+  var TRANSACTIONS_PER_PAGE = 100;
 
   var number = wesabe.lang.number;
   var string = wesabe.lang.string;
