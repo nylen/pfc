@@ -24,25 +24,6 @@
       </li>
     </ul><!-- end #primary-nav -->
     <ul id="secondary-nav">
-      <li id="nav-help"><%= link_to 'Help', help_url, :class => "menu-header" %>
-        <ul>
-          <div class="menu-content">
-            <div class="menu-column">
-              <li class="menu-head">User Manual</li>
-              <li><%= link_to 'Uploading to Wesabe', help_url("user-manual/uploading") %></li>
-              <li><%= link_to 'Features', help_url("user-manual/user-options") %></li>
-              <li><%= link_to 'Troubleshooting Problems', help_url("user-manual/troubleshooting") %></li>
-              <li class="menu-head">Support</li>
-              <li><%= link_to 'Community Resources', help_url("support/community-resources") %></li>
-              <li><%= link_to 'Request Support', help_url("support/request-support") %></li>
-
-              <%# See comment in app/views/page/_help_sidebar.html.erb for an explanation. %>
-              <%# <li class="menu-head"> %><%# link_to "I'm Freaking Out!", help_url("dont-panic") %><%# </li> %>
-            </div>
-          <div class="clear"></div>
-          </div>
-        </ul>
-      </li>
       <li id="nav-profile"><%= link_to 'Profile Settings', edit_profile_url, :class => "menu-header" %>
         <ul>
           <div class="menu-content">
@@ -58,6 +39,7 @@
           </div>
         </ul>
       </li>
+      <!--
       <li id="nav-search" style="display:none">
         <form id="searchform" action="/accounts/search" method="get">
          <fieldset>
@@ -67,6 +49,7 @@
          </fieldset>
         </form>
       </li>
+      -->
     </ul><!-- end of #secondary-nav-->
     <div class="clear"></div>
   </div>
