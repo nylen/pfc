@@ -8,7 +8,7 @@ gem 'chronic',         '0.2.3'
 gem 'rails',           '3.0.0.beta4'
 gem 'oniguruma' # sudo port install oniguruma5; sudo gem install indirect-oniguruma -s http://gems.github.com -- --with-onig-dir=/opt/local
 gem 'fastercsv'
-gem 'systemu'
+gem 'childlabor'
 gem 'riddle'
 gem 'memcache-client',            :require => 'memcache'
 gem 'mime-types',                 :require => 'mime/types'
@@ -20,10 +20,10 @@ gem 'rdoc'
 gem 'delayed_job',     '2.1.0.pre'
 gem 'thor' # for imports
 gem 'mongrel' # faster development server
+gem 'rchardet'
 
 group :development do
   gem 'mysql'           # in production: apt-get install libmysql-ruby
-  gem 'libcharguess'    # in production: apt-get install libcharguess-ruby1.8
 end
 
 group :test do
