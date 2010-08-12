@@ -2,6 +2,7 @@ class UploadsController < ApplicationController
   before_filter :check_authentication
   before_filter :only_allow_html, :only => [:new, :manual, :ssu]
   before_filter :require_ac, :only => [:error, :security]
+  skip_before_filter :verify_authenticity_token
 
   # FIXME: we should not be declaring stylesheets in the controller
   stylesheet 'upload-accounts'
