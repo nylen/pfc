@@ -15,7 +15,7 @@ class AccountsController < ApplicationController
     else
       respond_to do |format|
         format.html do
-          redirect_to accounts_url(:anchor => account_path(account))
+          redirect_to accounts_url(:anchor => account_path(account.id))
         end
       end
     end
