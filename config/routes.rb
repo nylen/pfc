@@ -36,6 +36,7 @@ Pfc::Application.routes.draw do
 
   # TODO: Fix this hack.
   get '/transactions/rational(.:format)' => 'rational_txactions#index'
+  get '/transactions/rational/*tags(.:format)', :to => 'rational_txactions#index'
 
   resources :transactions, :controller => 'txactions' do
     member do
@@ -45,6 +46,7 @@ Pfc::Application.routes.draw do
     end
   end
 
+  resources :tags
   resources :attachments
   resources :account_merchant_tag_stats
   resources :targets
@@ -55,6 +57,9 @@ Pfc::Application.routes.draw do
       get   :manual
     end
   end
+
+  # TODO: use resource routing for this
+  post '/targets/delete' => 'targets#destroy'
 
   resources :merchants do
     collection do

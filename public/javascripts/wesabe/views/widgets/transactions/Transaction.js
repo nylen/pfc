@@ -8,6 +8,8 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
   var number = wesabe.lang.number;
 
   $.extend($class.prototype, {
+    _id: null,
+
     _noteContainerElement: null,
     _noteLabel: null,
 
@@ -77,6 +79,24 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
       this._transferOtherAccountLink = new wesabe.views.widgets.HistoryLink(this._transferContainerElement.find('.other-account'));
       this._transferFromOtherConjunctionLabel = new wesabe.views.widgets.Label(this._transferContainerElement.find('.from'));
       this._transferToOtherConjunctionLabel = new wesabe.views.widgets.Label(this._transferContainerElement.find('.to'));
+    },
+
+    /**
+     * Gets the id of this transaction if it has one.
+     *
+     * @return {number}
+     */
+    getId: function() {
+      return this._id;
+    },
+
+    /**
+     * Sets the id of this transaction if it has one.
+     *
+     * @param {?number} id
+     */
+    setId: function(id) {
+      this._id = id;
     },
 
     /**
@@ -351,10 +371,12 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
 
     _setTransferInfoVisible: function(visible) {
       if (visible) {
-        this._transferHoverBoxElement.show();
+        // visible means "allow hover to make it display:block"
+        this._transferHoverBoxElement.css('display', '');
         this._transferContainerElement.removeClass('solo');
       } else {
-        this._transferHoverBoxElement.hide();
+        // hidden means "set it to display:none so it won't show on hover"
+        this._transferHoverBoxElement.css('display', 'none');
         this._transferContainerElement.addClass('solo');
       }
     }
