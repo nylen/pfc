@@ -9,6 +9,12 @@ class TagsController < ApplicationController
       render :nothing => true, :status => :not_found
     end
   end
+  
+  def update
+    if tag
+      Tag.rename(current_user, tag, params[:replacement_tags])
+    end
+  end
 
   private
 
