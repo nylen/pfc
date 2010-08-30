@@ -227,7 +227,7 @@ class Tag < ActiveRecord::Base
       # update AMTS entries via Delayed Job
       # FIXME: this isn't ideal, but using DJ breaks TagSpec. The fix is
       # to move the AMTS tests in TagSpec to the AMTS spec, testing AMTS.fix! separately
-      AccountMerchantTagStat.delay.fix!(user.account_key, old_tag, new_tag)
+      #AccountMerchantTagStat.fix!(user.account_key, old_tag, new_tag)
     end
   end
 
