@@ -20,7 +20,7 @@ gem 'rubyzip',                    :require => 'zip/zip'
 gem 'libxml-ruby',     '=1.1.3',  :require => 'xml/libxml'
 gem 'daemons'
 gem 'rdoc'
-gem 'delayed_job',     '2.1.0.pre'
+gem 'delayed_job',     :git => 'git://github.com/collectiveidea/delayed_job.git', :ref => 'b983b7e'
 gem 'thor' # for imports
 gem 'unicorn' # faster development server
 gem 'rchardet'
