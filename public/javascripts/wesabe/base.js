@@ -167,7 +167,7 @@ var wesabe = {
     });
 
     // build the class
-    $class.prototype = $.extend($super ? $.extend({}, $super) : {}, {
+    $class.prototype = wesabe.extend($super ? wesabe.copy($super) : {}, {
       getClass: function(){ return $class },
       isInstanceOf: function(klass){ return klass === this.getClass() }
     });
@@ -179,6 +179,31 @@ var wesabe = {
       callback($class, $super, $package);
 
     return $class;
+  },
+
+  /**
+   * Extends +dest+ with properties from +source+, excluding system properties
+   * like +__name__+.
+   *
+   * @param {!object} dest
+   * @param {!object} source
+   * @return {object} Returns +dest+.
+   */
+  extend: function(dest, source) {
+    for (var k in source)
+      if (!/^__/.test(k) && source.hasOwnProperty(k))
+        dest[k] = source[k];
+    return dest;
+  },
+
+  /**
+   * Copies +object+'s properties into a new object. This is a shallow copy.
+   *
+   * @param {!object} object
+   * @return {!object} A copy of +object+.
+   */
+  copy: function(object) {
+    return wesabe.extend({}, object);
   }
 };
 
