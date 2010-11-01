@@ -22,13 +22,12 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.integer  "status",                                      :default => 0, :null => false
   end
 
-  add_index "account_balances", ["account_id", "balance_date", "created_at"], :name => "idx_account_balances_account_id_balance_date_created_at"
-  add_index "account_balances", ["account_id"], :name => "account_balances_ibfk_1"
-  add_index "account_balances", ["balance_date"], :name => "balance_date"
-  add_index "account_balances", ["created_at"], :name => "created_at"
+  add_index "account_balances", ["account_id"], :name => "index_account_balances_on_account_id"
+  add_index "account_balances", ["balance_date"], :name => "index_account_balances_on_balance_date"
+  add_index "account_balances", ["created_at"], :name => "index_account_balances_on_created_at"
   add_index "account_balances", ["status"], :name => "index_account_balances_on_status"
-  add_index "account_balances", ["updated_at"], :name => "updated_at"
-  add_index "account_balances", ["upload_id"], :name => "upload_id"
+  add_index "account_balances", ["updated_at"], :name => "index_account_balances_on_updated_at"
+  add_index "account_balances", ["upload_id"], :name => "index_account_balances_on_upload_id"
 
   create_table "account_creds", :force => true do |t|
     t.string   "account_key",       :default => "", :null => false
@@ -36,14 +35,13 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.text     "creds",                             :null => false
-    t.integer  "version",                           :null => false
     t.text     "cookies",                           :null => false
   end
 
-  add_index "account_creds", ["account_key"], :name => "idx_account_creds_account_key"
-  add_index "account_creds", ["created_at"], :name => "idx_account_creds_created_at"
-  add_index "account_creds", ["financial_inst_id"], :name => "idx_account_creds_financial_inst_id"
-  add_index "account_creds", ["updated_at"], :name => "idx_account_creds_updated_at"
+  add_index "account_creds", ["account_key"], :name => "index_account_creds_on_account_key"
+  add_index "account_creds", ["created_at"], :name => "index_account_creds_on_created_at"
+  add_index "account_creds", ["financial_inst_id"], :name => "index_account_creds_on_financial_inst_id"
+  add_index "account_creds", ["updated_at"], :name => "index_account_creds_on_updated_at"
 
   create_table "account_merchant_tag_stats", :force => true do |t|
     t.string   "account_key",                              :null => false
@@ -57,7 +55,6 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "updated_at"
   end
 
-  add_index "account_merchant_tag_stats", ["account_key", "merchant_id", "name", "sign"], :name => "idx_amts_account_merchant_name_sign", :unique => true
   add_index "account_merchant_tag_stats", ["merchant_id"], :name => "index_account_merchant_tag_stats_on_merchant_id"
 
   create_table "accounts", :force => true do |t|
@@ -80,13 +77,12 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.integer  "position",                          :default => 0,         :null => false
   end
 
-  add_index "accounts", ["account_cred_id"], :name => "idx_accounts_account_cred_id"
-  add_index "accounts", ["account_key"], :name => "idx_accounts_account_key"
-  add_index "accounts", ["account_number"], :name => "accounts_account_number_index"
-  add_index "accounts", ["created_at"], :name => "created_at"
-  add_index "accounts", ["financial_inst_id"], :name => "financial_inst_id"
-  add_index "accounts", ["guid"], :name => "idx_accounts_on_guid", :unique => true
-  add_index "accounts", ["updated_at"], :name => "updated_at"
+  add_index "accounts", ["account_cred_id"], :name => "index_accounts_on_account_cred_id"
+  add_index "accounts", ["account_key"], :name => "index_accounts_on_account_key"
+  add_index "accounts", ["account_number"], :name => "index_accounts_on_account_number"
+  add_index "accounts", ["created_at"], :name => "index_accounts_on_created_at"
+  add_index "accounts", ["financial_inst_id"], :name => "index_accounts_on_financial_inst_id"
+  add_index "accounts", ["guid"], :name => "index_accounts_on_guid", :unique => true
 
   create_table "accounts_uploads", :id => false, :force => true do |t|
     t.integer  "account_id"
@@ -94,11 +90,11 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "created_at"
   end
 
-  add_index "accounts_uploads", ["account_id", "created_at"], :name => "account_uploads_account_id_created_at_index"
-  add_index "accounts_uploads", ["account_id", "upload_id"], :name => "accounts_uploads_account_id_upload_id_unique_index", :unique => true
-  add_index "accounts_uploads", ["account_id"], :name => "accounts_uploads_account_id_index"
-  add_index "accounts_uploads", ["created_at"], :name => "accounts_uploads_created_at_index"
-  add_index "accounts_uploads", ["upload_id"], :name => "accounts_uploads_upload_id_index"
+  add_index "accounts_uploads", ["account_id", "created_at"], :name => "index_accounts_uploads_on_account_id_and_created_at"
+  add_index "accounts_uploads", ["account_id", "upload_id"], :name => "index_accounts_uploads_on_account_id_and_upload_id", :unique => true
+  add_index "accounts_uploads", ["account_id"], :name => "index_accounts_uploads_on_account_id"
+  add_index "accounts_uploads", ["created_at"], :name => "index_accounts_uploads_on_created_at"
+  add_index "accounts_uploads", ["upload_id"], :name => "index_accounts_uploads_on_upload_id"
 
   create_table "attachments", :force => true do |t|
     t.string   "account_key",  :limit => 64
@@ -120,7 +116,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "updated_at"
   end
 
-  add_index "client_platforms", ["name"], :name => "name"
+  add_index "client_platforms", ["name"], :name => "index_client_platforms_on_name"
 
   create_table "countries", :force => true do |t|
     t.string "name"
@@ -130,7 +126,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   end
 
   add_index "countries", ["code"], :name => "index_countries_on_code"
-  add_index "countries", ["name"], :name => "countries_name_index"
+  add_index "countries", ["name"], :name => "index_countries_on_name"
 
   create_table "currency_exchange_rates", :force => true do |t|
     t.string "currency", :limit => 3, :default => "",  :null => false
@@ -138,7 +134,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.float  "rate",                  :default => 0.0, :null => false
   end
 
-  add_index "currency_exchange_rates", ["currency", "date"], :name => "currency_exchange_rates_currency_index", :unique => true
+  add_index "currency_exchange_rates", ["currency", "date"], :name => "index_currency_exchange_rates_on_currency_and_date", :unique => true
 
   create_table "financial_insts", :force => true do |t|
     t.string   "name",                  :limit => 100
@@ -177,9 +173,9 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   add_index "financial_insts", ["country_id"], :name => "index_financial_insts_on_country_id"
   add_index "financial_insts", ["creating_user_id", "status"], :name => "index_financial_insts_on_creating_user_id_and_status"
   add_index "financial_insts", ["creating_user_id"], :name => "index_financial_insts_on_creating_user_id"
-  add_index "financial_insts", ["name"], :name => "financial_insts_name_index"
-  add_index "financial_insts", ["ofx_org"], :name => "financial_insts_org_index"
-  add_index "financial_insts", ["status"], :name => "financial_insts_status_index"
+  add_index "financial_insts", ["name"], :name => "index_financial_insts_on_name"
+  add_index "financial_insts", ["ofx_org"], :name => "index_financial_insts_on_ofx_org"
+  add_index "financial_insts", ["status"], :name => "index_financial_insts_on_status"
   add_index "financial_insts", ["wesabe_id"], :name => "index_financial_insts_on_wesabe_id", :unique => true
 
   create_table "inbox_attachments", :force => true do |t|
@@ -302,10 +298,8 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   add_index "investment_txactions", ["account_id"], :name => "index_investment_txactions_on_account_id"
   add_index "investment_txactions", ["created_at"], :name => "index_investment_txactions_on_created_at"
   add_index "investment_txactions", ["investment_security_id"], :name => "index_investment_txactions_on_investment_security_id"
-  add_index "investment_txactions", ["merged_with_txaction_id", "merged_with_txaction_type"], :name => "index_investment_txactions_merged_with_txaction"
   add_index "investment_txactions", ["settle_date"], :name => "index_investment_txactions_on_settle_date"
   add_index "investment_txactions", ["trade_date"], :name => "index_investment_txactions_on_trade_date"
-  add_index "investment_txactions", ["transfer_txaction_id", "transfer_txaction_type"], :name => "index_investment_txactions_transfer_txaction"
   add_index "investment_txactions", ["txid"], :name => "index_investment_txactions_on_txid"
   add_index "investment_txactions", ["updated_at"], :name => "index_investment_txactions_on_updated_at"
   add_index "investment_txactions", ["upload_id"], :name => "index_investment_txactions_on_upload_id"
@@ -320,10 +314,10 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.integer  "sign",            :default => -1, :null => false
   end
 
-  add_index "merchant_bank_names", ["created_at"], :name => "merchant_bank_names_created_at_index"
-  add_index "merchant_bank_names", ["filtered_name", "sign"], :name => "merchant_bank_names_filtered_name_sign_index"
-  add_index "merchant_bank_names", ["txactions_count"], :name => "merchant_bank_names_txactions_count_index"
-  add_index "merchant_bank_names", ["updated_at"], :name => "merchant_bank_names_updated_at_index"
+  add_index "merchant_bank_names", ["created_at"], :name => "index_merchant_bank_names_on_created_at"
+  add_index "merchant_bank_names", ["filtered_name", "sign"], :name => "index_merchant_bank_names_on_filtered_name_and_sign"
+  add_index "merchant_bank_names", ["txactions_count"], :name => "index_merchant_bank_names_on_txactions_count"
+  add_index "merchant_bank_names", ["updated_at"], :name => "index_merchant_bank_names_on_updated_at"
 
   create_table "merchants", :force => true do |t|
     t.string   "name",                  :default => "",    :null => false
@@ -338,11 +332,11 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   end
 
   add_index "merchants", ["canonical_merchant_id"], :name => "index_merchants_on_canonical_merchant_id"
-  add_index "merchants", ["created_at"], :name => "created_at"
+  add_index "merchants", ["created_at"], :name => "index_merchants_on_created_at"
   add_index "merchants", ["name"], :name => "index_merchants_on_name", :unique => true
-  add_index "merchants", ["publicly_visible"], :name => "merchants_publicly_visible_index"
-  add_index "merchants", ["updated_at"], :name => "updated_at"
-  add_index "merchants", ["users_count"], :name => "merchants_users_count_index"
+  add_index "merchants", ["publicly_visible"], :name => "index_merchants_on_publicly_visible"
+  add_index "merchants", ["updated_at"], :name => "index_merchants_on_updated_at"
+  add_index "merchants", ["users_count"], :name => "index_merchants_on_users_count"
 
   create_table "merchants_users", :force => true do |t|
     t.integer  "merchant_id"
@@ -354,12 +348,12 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.boolean  "autotags_disabled", :default => false, :null => false
   end
 
-  add_index "merchants_users", ["created_at"], :name => "created_at"
-  add_index "merchants_users", ["merchant_id"], :name => "txaction_name_aliases_users_ibfk_1"
-  add_index "merchants_users", ["rating"], :name => "user_txaction_name_aliases_rating_index"
-  add_index "merchants_users", ["updated_at"], :name => "updated_at"
-  add_index "merchants_users", ["user_id", "merchant_id"], :name => "user_merchant_idx"
-  add_index "merchants_users", ["user_id"], :name => "txaction_name_aliases_users_ibfk_2"
+  add_index "merchants_users", ["created_at"], :name => "index_merchants_users_on_created_at"
+  add_index "merchants_users", ["merchant_id"], :name => "index_merchants_users_on_merchant_id"
+  add_index "merchants_users", ["rating"], :name => "index_merchants_users_on_rating"
+  add_index "merchants_users", ["updated_at"], :name => "index_merchants_users_on_updated_at"
+  add_index "merchants_users", ["user_id", "merchant_id"], :name => "index_merchants_users_on_user_id_and_merchant_id"
+  add_index "merchants_users", ["user_id"], :name => "index_merchants_users_on_user_id"
 
   create_table "snapshots", :force => true do |t|
     t.integer  "user_id"
@@ -370,7 +364,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "updated_at"
   end
 
-  add_index "snapshots", ["uid"], :name => "index_snapshots_on_uid"
+  add_index "snapshots", ["uid"], :name => "index_snapshots_on_uid", :unique => true
   add_index "snapshots", ["user_id"], :name => "index_snapshots_on_user_id"
 
   create_table "ssu_jobs", :force => true do |t|
@@ -387,12 +381,12 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.integer  "version"
   end
 
-  add_index "ssu_jobs", ["account_cred_id"], :name => "idx_ssu_jobs_account_cred_id"
-  add_index "ssu_jobs", ["account_key"], :name => "idx_ssu_jobs_account_key"
-  add_index "ssu_jobs", ["created_at"], :name => "idx_ssu_jobs_created_at"
-  add_index "ssu_jobs", ["expires_at"], :name => "idx_ssu_jobs_expires_at"
-  add_index "ssu_jobs", ["job_guid"], :name => "idx_ssu_jobs_job_guid"
-  add_index "ssu_jobs", ["updated_at"], :name => "idx_ssu_jobs_updated_at"
+  add_index "ssu_jobs", ["account_cred_id"], :name => "index_ssu_jobs_on_account_cred_id"
+  add_index "ssu_jobs", ["account_key"], :name => "index_ssu_jobs_on_account_key"
+  add_index "ssu_jobs", ["created_at"], :name => "index_ssu_jobs_on_created_at"
+  add_index "ssu_jobs", ["expires_at"], :name => "index_ssu_jobs_on_expires_at"
+  add_index "ssu_jobs", ["job_guid"], :name => "index_ssu_jobs_on_job_guid"
+  add_index "ssu_jobs", ["updated_at"], :name => "index_ssu_jobs_on_updated_at"
 
   create_table "stocks", :force => true do |t|
     t.string "name",     :limit => 127, :null => false
@@ -414,8 +408,8 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   end
 
   add_index "taggings", ["name"], :name => "index_taggings_on_name"
-  add_index "taggings", ["tag_id"], :name => "taggings_tag_id_index"
-  add_index "taggings", ["taggable_id"], :name => "idx_taggings_taggable_id"
+  add_index "taggings", ["tag_id"], :name => "index_taggings_on_tag_id"
+  add_index "taggings", ["taggable_id"], :name => "index_taggings_on_taggable_id"
 
   create_table "tags", :force => true do |t|
     t.string   "normalized_name", :null => false
@@ -423,7 +417,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "updated_at"
   end
 
-  add_index "tags", ["normalized_name"], :name => "tags_normalized_name_index", :unique => true
+  add_index "tags", ["normalized_name"], :name => "index_tags_on_normalized_name", :unique => true
 
   create_table "targets", :force => true do |t|
     t.string  "tag_name",                                        :null => false
@@ -432,8 +426,8 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.decimal "amount_per_month", :precision => 14, :scale => 2
   end
 
-  add_index "targets", ["tag_id"], :name => "targets_tag_id_index"
-  add_index "targets", ["user_id"], :name => "targets_user_id_index"
+  add_index "targets", ["tag_id"], :name => "index_targets_on_tag_id"
+  add_index "targets", ["user_id"], :name => "index_targets_on_user_id"
 
   create_table "txaction_attachments", :force => true do |t|
     t.integer "attachment_id", :null => false
@@ -496,18 +490,18 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "fi_date_posted",                                                                            :null => false
   end
 
-  add_index "txactions", ["account_id"], :name => "account_id"
-  add_index "txactions", ["created_at"], :name => "created_at"
-  add_index "txactions", ["date_posted"], :name => "date_posted"
-  add_index "txactions", ["fi_date_posted"], :name => "idx_txactions_fi_date_posted"
-  add_index "txactions", ["filtered_name"], :name => "txactions_filtered_name_index"
-  add_index "txactions", ["merchant_id"], :name => "txactions_merchant_id_index"
-  add_index "txactions", ["transfer_txaction_id"], :name => "idx_txactions_transfer_txaction_id"
-  add_index "txactions", ["txaction_type_id"], :name => "txaction_type_id"
-  add_index "txactions", ["updated_at"], :name => "txactions_updated_at_index"
-  add_index "txactions", ["upload_id"], :name => "upload_id"
-  add_index "txactions", ["usd_amount"], :name => "txactions_usd_amount_index"
-  add_index "txactions", ["wesabe_txid", "status"], :name => "index_txactions_wesabe_txid_status", :unique => true
+  add_index "txactions", ["account_id"], :name => "index_txactions_on_account_id"
+  add_index "txactions", ["created_at"], :name => "index_txactions_on_created_at"
+  add_index "txactions", ["date_posted"], :name => "index_txactions_on_date_posted"
+  add_index "txactions", ["fi_date_posted"], :name => "index_txactions_on_fi_date_posted"
+  add_index "txactions", ["filtered_name"], :name => "index_txactions_on_filtered_name"
+  add_index "txactions", ["merchant_id"], :name => "index_txactions_on_merchant_id"
+  add_index "txactions", ["transfer_txaction_id"], :name => "index_txactions_on_transfer_txaction_id"
+  add_index "txactions", ["txaction_type_id"], :name => "index_txactions_on_txaction_type_id"
+  add_index "txactions", ["updated_at"], :name => "index_txactions_on_updated_at"
+  add_index "txactions", ["upload_id"], :name => "index_txactions_on_upload_id"
+  add_index "txactions", ["usd_amount"], :name => "index_txactions_on_usd_amount"
+  add_index "txactions", ["wesabe_txid", "status"], :name => "index_txactions_on_wesabe_txid_and_status", :unique => true
 
   create_table "upload_formats", :force => true do |t|
     t.string   "name",       :limit => 16
@@ -515,7 +509,7 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.datetime "updated_at"
   end
 
-  add_index "upload_formats", ["name"], :name => "name"
+  add_index "upload_formats", ["name"], :name => "index_upload_formats_on_name"
 
   create_table "uploads", :force => true do |t|
     t.integer  "client_platform_id",               :default => 0,  :null => false
@@ -530,12 +524,12 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
     t.string   "guid",               :limit => 8,  :default => "", :null => false
   end
 
-  add_index "uploads", ["client_platform_id"], :name => "client_platform_id"
-  add_index "uploads", ["created_at"], :name => "created_at"
+  add_index "uploads", ["client_platform_id"], :name => "index_uploads_on_client_platform_id"
+  add_index "uploads", ["created_at"], :name => "index_uploads_on_created_at"
   add_index "uploads", ["financial_inst_id"], :name => "index_uploads_on_financial_inst_id"
   add_index "uploads", ["guid"], :name => "index_uploads_on_guid", :unique => true
-  add_index "uploads", ["status"], :name => "uploads_status_index"
-  add_index "uploads", ["upload_format_id"], :name => "upload_format_id"
+  add_index "uploads", ["status"], :name => "index_uploads_on_status"
+  add_index "uploads", ["upload_format_id"], :name => "index_uploads_on_upload_format_id"
 
   create_table "user_logins", :force => true do |t|
     t.integer "user_id"
@@ -544,14 +538,6 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
 
   add_index "user_logins", ["login_date"], :name => "index_user_logins_on_login_date"
   add_index "user_logins", ["user_id"], :name => "index_user_logins_on_user_id"
-
-  create_table "user_migrations", :force => true do |t|
-    t.integer "user_id", :null => false
-    t.string  "version", :null => false
-  end
-
-  add_index "user_migrations", ["user_id", "version"], :name => "index_user_migrations_on_user_id_and_version", :unique => true
-  add_index "user_migrations", ["user_id"], :name => "index_user_migrations_on_user_id"
 
   create_table "user_preferences", :force => true do |t|
     t.integer  "user_id",     :default => 0, :null => false
@@ -605,21 +591,21 @@ ActiveRecord::Schema.define(:version => 20101029010419) do
   end
 
   add_index "users", ["account_key"], :name => "index_users_on_account_key", :unique => true
-  add_index "users", ["cobrand_id"], :name => "idx_users_cobrand_id"
-  add_index "users", ["created_at"], :name => "created_at"
-  add_index "users", ["feed_key"], :name => "users_feed_key_index"
-  add_index "users", ["goals_key"], :name => "users_goals_key_index"
-  add_index "users", ["last_api_login"], :name => "last_api_login"
-  add_index "users", ["last_upload_date"], :name => "idx_users_last_upload_date"
-  add_index "users", ["last_web_login"], :name => "last_web_login"
-  add_index "users", ["membership_expiration"], :name => "users_membership_expiration_index"
-  add_index "users", ["membership_type"], :name => "users_membership_type_index"
+  add_index "users", ["cobrand_id"], :name => "index_users_on_cobrand_id"
+  add_index "users", ["created_at"], :name => "index_users_on_created_at"
+  add_index "users", ["feed_key"], :name => "index_users_on_feed_key"
+  add_index "users", ["goals_key"], :name => "index_users_on_goals_key"
+  add_index "users", ["last_api_login"], :name => "index_users_on_last_api_login"
+  add_index "users", ["last_upload_date"], :name => "index_users_on_last_upload_date"
+  add_index "users", ["last_web_login"], :name => "index_users_on_last_web_login"
+  add_index "users", ["membership_expiration"], :name => "index_users_on_membership_expiration"
+  add_index "users", ["membership_type"], :name => "index_users_on_membership_type"
   add_index "users", ["name"], :name => "index_users_on_name"
   add_index "users", ["normalized_name"], :name => "index_users_on_normalized_name", :unique => true
-  add_index "users", ["photo_key"], :name => "users_photo_key_index"
-  add_index "users", ["postal_code"], :name => "users_postal_code_index"
-  add_index "users", ["uid"], :name => "users_uid_index", :unique => true
-  add_index "users", ["updated_at"], :name => "updated_at"
+  add_index "users", ["photo_key"], :name => "index_users_on_photo_key"
+  add_index "users", ["postal_code"], :name => "index_users_on_postal_code"
+  add_index "users", ["uid"], :name => "index_users_on_uid", :unique => true
+  add_index "users", ["updated_at"], :name => "index_users_on_updated_at"
   add_index "users", ["username", "cobrand_id"], :name => "index_users_on_username_and_cobrand_id", :unique => true
 
 end
