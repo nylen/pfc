@@ -7,6 +7,7 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
 
   $.extend($class.prototype, {
     _element: null,
+    _contentElement: null,
     _childWidgets: null,
 
     init: function(element) {
@@ -17,8 +18,31 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
       return this._element;
     },
 
+    /**
+     * Returns the element to which content will be added.
+     *
+     * @returns {Element}
+     */
+    getContentElement: function() {
+      return this._contentElement || this.getElement();
+    },
+
+    /**
+     * Sets the element to which content will be added. Set this to +null+
+     * to revert the content element back to the container element.
+     *
+     * @param {Element} element
+     */
+    setContentElement: function(element) {
+      this._contentElement = element;
+    },
+
     getId: function() {
       return this.getElement().attr('id');
+    },
+
+    setId: function(id) {
+      this.getElement().attr('id', id);
     },
 
     isVisible: function() {
@@ -76,6 +100,24 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
     },
 
     /**
+     * Unregisters a child widget that was previously registered.
+     *
+     * @param {!BaseWidget} child
+     */
+    unregisterChildWidget: function(child) {
+      this._childWidgets = wesabe.lang.array.minus(this._childWidgets, [child]);
+    },
+
+    /**
+     * Unregisters child widgets that were previously registered.
+     *
+     * @param {...BaseWidget} var_args
+     */
+    unregisterChildWidgets: function() {
+      this._childWidgets = wesabe.lang.array.minus(this._childWidgets, arguments);
+    },
+
+    /**
      * Removes this widget and its children from the DOM.
      */
     remove: function() {
@@ -107,6 +149,131 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
         if (isOwnProperty && isIvar)
           this[key] = null;
       }
+    },
+
+    /**
+     * Appends the widget to the given jQuery +element+.
+     *
+     * @param {!jQuery} element
+     */
+    appendTo: function(element) {
+      if (element.getElement)
+        element = element.getElement();
+      this._willMoveToParent(element);
+      this._element.appendTo(element);
+      this._didMoveToParent();
+    },
+
+    /**
+     * Prepends the widget to the given jQuery +element+.
+     *
+     * @param {!jQuery} element
+     */
+    prependTo: function(element) {
+      if (element.getElement)
+        element = element.getElement();
+      this._willMoveToParent(element);
+      this._element.prependTo(element);
+      this._didMoveToParent();
+    },
+
+    /**
+     * Inserts this widget before the given jQuery +element+.
+     *
+     * @param {!jQuery} element
+     */
+    insertAfter: function(element) {
+      if (element.getElement)
+        element = element.getElement();
+      this._willMoveToParent(element.parent());
+      this._element.insertAfter(element);
+      this._didMoveToParent();
+    },
+
+    /**
+     * Inserts this widget before the given jQuery +element+.
+     *
+     * @param {!jQuery} element
+     */
+    insertBefore: function(element) {
+      if (element.getElement)
+        element = element.getElement();
+      this._willMoveToParent(element.parent());
+      this._element.insertBefore(element);
+      this._didMoveToParent();
+    },
+
+    /**
+     * @private
+     */
+    _willMoveToParent: function(element) {
+    },
+
+    /**
+     * @private
+     */
+    _didMoveToParent: function() {
+    },
+
+    /**
+     * Adds +widget+ to the end of this widget's content.
+     *
+     * @param {!BaseWidget} widget
+     */
+    appendChildWidget: function(widget) {
+      widget.appendTo(this.getContentElement());
+      this.registerChildWidget(widget);
+    },
+
+    /**
+     * Adds +widget+ to the beginning of this widget's content.
+     *
+     * @param {!BaseWidget} widget
+     */
+    prependChildWidget: function(widget) {
+      widget.prependTo(this.getContentElement());
+      this.registerChildWidget(widget);
+    },
+
+    /**
+     * Adds +element+ to the end of this widget's content.
+     *
+     * @param {!Element} element
+     */
+    appendElement: function(element) {
+      this.getContentElement().append(element);
+    },
+
+    /**
+     * Adds +element+ to the beginning of this widget's content.
+     *
+     * @param {!Element} element
+     */
+    prependElement: function(element) {
+      this.getContentElement().prepend(element);
+    },
+
+    /**
+     * Determines whether this widget is attached to an HTML document.
+     */
+    isAttached: function() {
+      return this._element &&
+             this._element.length &&
+             this._element.parent('html').length;
+    },
+
+    /**
+     * Adds +className+ to this widget's element.
+     */
+    addClassName: function(className) {
+      this._element.addClass(className);
+    },
+
+    /**
+     * Removes +className+ from this widget's element.
+     */
+    removeClassName: function(className) {
+      this._element.removeClass(className);
     }
   });
 });

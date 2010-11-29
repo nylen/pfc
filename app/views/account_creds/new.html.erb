@@ -1,0 +1,16 @@
+<% set_page_title "Automatic Uploader" %>
+
+<% javascript 'wesabe/views/widgets/FadingLabelField' %>
+<% javascript 'wesabe/views/pages/credentials/new' %>
+<% javascript 'wesabe/views/shared/form' %>
+
+<script type="text/javascript">
+  jQuery(function() {
+    var module = new wesabe.views.widgets.Module('two-column flat');
+    module.appendTo($('#three-col-center'));
+    page = new wesabe.views.pages.credentials.NewPage(module);
+    page.setFinancialInstitution(<%= @financial_inst.to_json.html_safe %>);
+  });
+</script>
+
+<div id="three-col-center"></div>

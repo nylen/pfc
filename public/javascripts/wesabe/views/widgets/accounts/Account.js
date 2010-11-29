@@ -58,13 +58,15 @@ wesabe.$class('wesabe.views.widgets.accounts.Account', wesabe.views.widgets.Base
       this._ssuStatusElement = this._accountStatusElements.filter('.update:not(.error)');
       this._ssuUpdateSpinner = this._ssuStatusElement.find('.updating-spinner');
       this._ssuErrorStatusElement = this._accountStatusElements.filter('.update.error');
-      this._ssuErrorHoverBox = new $package.AutomaticUploaderErrorDialog(this._ssuErrorStatusElement.find('.hover-box'), this);
+      this._ssuErrorHoverBox = new $package.AutomaticUploaderErrorDialog(this);
+      this._ssuErrorHoverBox.setVisible(false);
+      this._ssuErrorHoverBox.appendTo(this._ssuErrorStatusElement);
       this._manualUploadStatusElement = this._accountStatusElements.filter('.upload');
       this._manualUploadHoverBox = new $package.ManualUploadDialog(this._manualUploadStatusElement.find('.hover-box'), this);
       this._uploadStatusElement = this._accountStatusElements.filter('.upload');
       this._restoreAccountStatus();
 
-      this.registerChildWidgets(this._total, this._ssuErrorStatusElement, this._manualUploadHoverBox);
+      this.registerChildWidgets(this._total, this._ssuErrorHoverBox, this._manualUploadHoverBox);
     },
 
     /**
@@ -210,12 +212,19 @@ wesabe.$class('wesabe.views.widgets.accounts.Account', wesabe.views.widgets.Base
       return this.getCredential() ? true : false;
     },
 
+    lastSSUJob: function() {
+      var cred = this.getCredential();
+      return cred && cred.last_job;
+    },
+
     hasSSUError: function() {
-      return this.isSSU() && (job = this.getCredential().job) && job.status_string === 'failed';
+      var lastJob = this.lastSSUJob();
+      return lastJob && lastJob.status == 'failed';
     },
 
     isUpdating: function() {
-      return this.isSSU() && (job = this.getCredential().job) && job.status_string === 'pending';
+      var lastJob = this.lastSSUJob();
+      return lastJob && lastJob.status == 'pending';
     },
 
     /**
@@ -277,7 +286,7 @@ wesabe.$class('wesabe.views.widgets.accounts.Account', wesabe.views.widgets.Base
         return;
 
       var ds = this._accountGroup.getCredentialDataSource();
-      $.post('/credentials/'+this.getCredential().id+'/jobs', function() {
+      $.post(this.getCredential().uri+'/jobs', function() {
         ds.pollUntilSyncDone();
       });
     },

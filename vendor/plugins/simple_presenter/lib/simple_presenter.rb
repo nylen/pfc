@@ -10,12 +10,12 @@ class SimplePresenter < ActiveSupport::BasicObject
   end
 
   def inspect
-    "#<#{self.class}: presenter is a #{@presentable.class}, renderer is a #{@renderer.class}>"
+    "#<#{self.class}: presentable is a #{@presentable.class}, renderer is a #{@renderer.class}>"
   end
 
-  def method_missing(sym, *args)
-    return @presentable.send(sym, *args)  if @presentable.respond_to?(sym)
-    return @renderer.send(sym, *args)     if @renderer.respond_to?(sym)
+  def method_missing(sym, *args, &block)
+    return @presentable.__send__(sym, *args, &block)  if @presentable.respond_to?(sym)
+    return @renderer.__send__(sym, *args, &block)     if @renderer.respond_to?(sym)
     raise NoMethodError, "#{self.class} could not find method `#{sym}`"
   end
 

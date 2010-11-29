@@ -40,7 +40,7 @@ class UploadsController < ApplicationController
 
     if ssu_enabled? && financial_inst.ssu_support?(current_user)
       # If possible, send users to SSU
-      @path = ssu_new_upload_path(:fi => financial_inst)
+      @path = new_credential_path(:fi => financial_inst)
     end
 
     # Worst case (or by request), manual uploads
@@ -55,13 +55,6 @@ class UploadsController < ApplicationController
     @financial_inst = financial_inst
     @need_more_info = params[:need_more_info]
     @show_form = "display:none;" unless flash[:error]
-  end
-
-  def ssu
-    return unless financial_inst
-
-    return redirect_to(new_upload_path) unless ssu_enabled? && (params[:force] == 'true' || financial_inst.ssu_support?(current_user))
-    @account_creds = current_user.account_creds.find_all_by_financial_inst_id(financial_inst.id)
   end
 
   def error

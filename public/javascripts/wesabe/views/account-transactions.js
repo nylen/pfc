@@ -119,7 +119,7 @@ jQuery(function($) {
           var self = $(this);
 
           var i;
-          var newTxactionList = [];
+          var newTxactionList = $([]);
 
           var transactions = data.transactions || data['investment-transactions'];
           var isInvestment = data['investment-transactions'] !== undefined;
@@ -129,15 +129,14 @@ jQuery(function($) {
           if (items.length == 0) {
             // no existing items, so just add the transactions
             for (i = 0; i < transactions.length; i++) {
-              newTxactionList.push(self.fn("create", isInvestment).fn("update", transactions[i]));
+              newTxactionList = newTxactionList.add(self.fn("create", isInvestment).fn("update", transactions[i]));
             }
           } else {
             var newTxactionsByURI = {};
             var existingTxactionsByURI = {};
 
             // clear the list if we're switching to or from investments
-            if ((isInvestment && !items[0].isInvestment) ||
-                (!isInvestment && items[0].isInvestment))
+            if (isInvestment ^ items[0].isInvestment)
               self.fn('clear');
             else {
               for (i = 0; i < transactions.length; i++) {
@@ -163,18 +162,15 @@ jQuery(function($) {
                   uri = transaction.uri,
                   item = existingTxactionsByURI[uri];
 
-              if (item) {
-                newTxactionList.push(item);
-              } else {
+              if (!item)
                 item = self.fn("create", isInvestment);
-                newTxactionList.push(item);
-              }
 
+              newTxactionList = newTxactionList.add(item[0]);
               item.fn('update', transaction);
             }
           }
 
-          $(newTxactionList).prependTo(self);
+          self.prepend(newTxactionList);
 
           // FIXME: we need singleton txaction edit so bad
           //   this is still pretty awful, it will jump you to name from tags
@@ -368,7 +364,7 @@ jQuery(function($) {
 
         var widget = self.data('widget');
 
-        widget.setId(data['id']);
+        widget.setURI(data['id']);
         widget.setNote(data['note']);
         widget.setDate(data['date']);
 
@@ -480,7 +476,6 @@ jQuery(function($) {
 
     investmentTransaction: {
       isInvestment: true,
-      id:               $.getsetdata('id'),
       uri:              $.getsetdata('uri'),
       account:          $.getsetdata('account'),
       // investment transaction attributes
@@ -703,7 +698,7 @@ jQuery(function($) {
           // show Happy Magic Check Autocomplete if this is a check and it is unedited
           if (checkNumber && checkNumber.length > 0 && !merchant.id) {
             options.showChecks = true;
-            options.txactionId = self.fn("id");
+            options.txactionURI = self.fn("uri");
           }
 
           options.footer = self.fn('uneditedName');
@@ -752,7 +747,7 @@ jQuery(function($) {
         attachmentList.empty().append(self.fn('attachmentListItems', true));
 
         $('.transfer-details input[type=checkbox]', edit_box)
-          .attr('id', 'is_transfer_' + widget.getId())
+          .attr('id', 'is_transfer_' + widget.getURI())
           .attr('checked', widget.isTransfer())
           .click(function(){
             if ($(this).attr('checked')) {
@@ -932,7 +927,7 @@ jQuery(function($) {
         var self = $(this),
             widget = self.data('widget');
 
-        var editing = !!widget.getId();
+        var editing = !!widget.getURI();
         var form = $('form:first', self);
         if (editing) {
           form.append('<input type="hidden" name="_method" value="PUT">');
@@ -1034,7 +1029,6 @@ jQuery(function($) {
       var checked = $("input[type=radio]:checked", this).val();
       return (checked == "spent") ? "-" : "+";
     },
-    id: function() { return null; },
     account: $.getsetdata('account'),
     uri: function() {
       var account = $(this).fn('account');

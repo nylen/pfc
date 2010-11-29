@@ -17,6 +17,9 @@ wesabe.$class('wesabe.views.widgets.BaseField', wesabe.views.widgets.BaseWidget,
     init: function(element, delegate) {
       var me = this;
 
+      if (!element)
+        element = $('<input type="text">');
+
       $super.init.call(me, element);
 
       // bind the events that subclasses or delegates declare themselves interested in
@@ -47,6 +50,24 @@ wesabe.$class('wesabe.views.widgets.BaseField', wesabe.views.widgets.BaseWidget,
 
     setValue: function(value) {
       this.getElement().val(value);
+    },
+
+    getName: function() {
+      return this.getElement().attr('name');
+    },
+
+    setName: function(name) {
+      this.getElement().attr('name', name);
+    },
+
+    isEnabled: function() {
+      return !this.getElement().attr('disabled');
+    },
+
+    setEnabled: function(enabled) {
+      this.getElement().attr('disabled', !enabled);
+      if (!enabled)
+        this.blur();
     },
 
     clear: function() {
@@ -85,7 +106,7 @@ wesabe.$class('wesabe.views.widgets.BaseField', wesabe.views.widgets.BaseWidget,
           me._value = me.getValue();
           me.getElement().trigger('pollingchange');
         }
-        this._changeWatcher = setTimeout(arguments.callee, msToWait || 50);
+        me._changeWatcher = setTimeout(arguments.callee, msToWait || 50);
       })();
     },
 

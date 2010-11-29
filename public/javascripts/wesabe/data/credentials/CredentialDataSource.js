@@ -17,15 +17,6 @@ wesabe.$class('wesabe.data.credentials.CredentialDataSource', wesabe.data.BaseDa
      * no such credential can be found.
      */
     getCredentialDataByAccountURI: function(accountUri) {
-      var m = accountUri && accountUri.match(/\/accounts\/(\d+)/);
-      return m && this.getCredentialDataByAccountId(number.parse(m[1]));
-    },
-
-    /**
-     * Returns credential data for the account with id {accountId}, or null if
-     * no such credential can be found.
-     */
-    getCredentialDataByAccountId: function(accountId) {
       if (!this.hasData())
         return null;
 
@@ -33,10 +24,59 @@ wesabe.$class('wesabe.data.credentials.CredentialDataSource', wesabe.data.BaseDa
           length = credentials.length;
 
       while (length--)
-        if (array.contains(credentials[length].accounts, accountId))
+        if (array.contains(credentials[length].accounts, accountUri))
           return credentials[length];
 
       return null;
+    },
+
+    /**
+     * Destroys the credential at the given +uri+. If +uri+ is a credential
+     * structure, the uri will be determined for you.
+     *
+     * @param {!String|Object} uri
+     */
+    destroy: function(uri) {
+      if (uri && uri.uri)
+        uri = uri.uri;
+
+      if (!uri)
+        return;
+
+      var me = this;
+      $.ajax({
+        type: 'DELETE',
+        url: uri,
+        success: function(){ me.onDestroy(uri); },
+        error: function(xhr, textStatus, errorThrown){ me.onDestroyFailed(uri, xhr, textStatus, errorThrown); }
+      });
+    },
+
+    onDestroy: function(uri) {
+      if (this.isCachingEnabled()) {
+        // remove from the cache
+        for (var k in this._cache) {
+          var cache = this._cache[k], result = [];
+
+          for (var i = 0, length = cache.length; i < length; i++)
+            if (cache[i].uri != uri)
+              result.push(cache[i]);
+
+          this._cache[k] = result;
+        }
+      }
+
+      this.trigger('destroy', [uri]);
+
+      if (this.isCachingEnabled()) {
+        var data = this.getCache({});
+        if (data)
+          this.trigger('change', [data]);
+      }
+    },
+
+    onDestroyFailed: function(uri, xhr, textStatus, errorThrown) {
+      this.trigger('destroy-failed', [uri, xhr, textStatus, errorThrown]);
     },
 
     /**
@@ -49,8 +89,8 @@ wesabe.$class('wesabe.data.credentials.CredentialDataSource', wesabe.data.BaseDa
         return false;
 
       for (var i = data.length; i--;) {
-        var job = data[i].job;
-        if (job && job.status_string === 'pending')
+        var job = data[i].last_job;
+        if (job && job.status === 'pending')
           return true;
       }
 

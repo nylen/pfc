@@ -43,6 +43,7 @@ Pfc::Application.routes.draw do
       put :undelete
       get :on_select_merchant
       get :transfer_selector
+      get :merchant_list_checks
     end
   end
 
@@ -77,7 +78,7 @@ Pfc::Application.routes.draw do
   ## Big Rock Candy Mountain Passthrough
 
   match '/data/transactions/*uri(.:format)',            :to => 'brcm#transactions'
-  match '/data/investment-transactions/*uri(.:format)', :to => 'brcm#investment-transactions'
+  match '/data/investment-transactions/*uri(.:format)', :to => 'brcm#transactions'
   match '/data/*uri(.:format)',                         :to => 'brcm#passthrough'
 
   ## User Profile & Preferences
