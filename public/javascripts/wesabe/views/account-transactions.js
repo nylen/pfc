@@ -927,7 +927,7 @@ jQuery(function($) {
         var self = $(this),
             widget = self.data('widget');
 
-        var editing = widget && widget.getId();
+        var editing = widget && widget.getURI();
         var form = $('form:first', self);
         if (editing) {
           form.append('<input type="hidden" name="_method" value="PUT">');
