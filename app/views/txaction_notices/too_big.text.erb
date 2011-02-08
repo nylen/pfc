@@ -1,0 +1,4 @@
+Account:  <%= @account %>
+Merchant: <%= @txaction.merchant_name || @txaction.raw_name %>
+Amount:   <%= @txaction.money_amount %>
+Date:     <%= short_friendly_date(@txaction.fi_date_posted) %>

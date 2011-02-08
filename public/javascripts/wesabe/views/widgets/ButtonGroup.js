@@ -1,7 +1,7 @@
 /**
  * Manages a group of toggle buttons where only one can be selected at a time.
  */
-wesabe.$class('wesabe.views.widgets.ButtonGroup', wesabe.views.widgets.BaseWidget, function($class, $super, $package) {
+wesabe.$class('wesabe.views.widgets.ButtonGroup', function($class, $super, $package) {
   // import jQuery as $
   var $ = jQuery;
 
@@ -18,15 +18,12 @@ wesabe.$class('wesabe.views.widgets.ButtonGroup', wesabe.views.widgets.BaseWidge
       var elements = [];
       for (var i = 0; i < buttons.length; i++) {
         var button = buttons[i];
-        elements.push(button.getElement());
+        elements.push(button.get('element'));
         button.bind('click', function(){ self.onButtonClick(this) });
-        this.registerChildWidget(button);
         this._buttons.push(button);
-        if (button.isSelected())
+        if (button.get('selected'))
           this._selectedButton = button;
       }
-
-      $super.init.call(this, elements);
     },
 
     onButtonClick: function(button) {
@@ -47,13 +44,13 @@ wesabe.$class('wesabe.views.widgets.ButtonGroup', wesabe.views.widgets.BaseWidge
       this._selectedButton = button;
       for (var i = this._buttons.length; i--; ) {
         var b = this._buttons[i];
-        b.setSelected(b === button);
+        b.set('selected', b === button);
       }
     },
 
     selectButtonByValue: function(value) {
       for (var i = this._buttons.length; i--; ) {
-        if (this._buttons[i].getValue() === value) {
+        if (this._buttons[i].get('value') === value) {
           this.selectButton(this._buttons[i]);
           break;
         }

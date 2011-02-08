@@ -39,19 +39,6 @@
     // are we showing only unedited transactions?
     unedited: false,
 
-    // does the data currently being displayed need updated?
-    _needsRefresh: false,
-    // does the data currently being displayed need to be cleared for new data?
-    _needsReload: false,
-
-    // does the chart need updating to reflect a change in state?
-    _chartNeedsRefresh: false,
-    // does the transaction list need updating to reflect a change in state?
-    _transactionsNeedRefresh: false,
-
-    // have we read and restored state from the hash yet?
-    _hasRestoredHashState: false,
-
     // have the various page components been loaded yet?
     _hasLoadedAccounts: false,
     _hasLoadedTags: false,
@@ -64,30 +51,23 @@
         .setPageTitle('My Accounts')
         .setCurrentTab('accounts');
 
-      self.chartNeedsRefresh();
-      self.transactionsNeedRefresh();
-
       // create a shared selection for this page
       self.selection = new wesabe.util.Selection();
-      self.selection.bind('changed', function() {
+      self.selection.bind('changed', function(event, newsel, oldsel) {
         self.onSelectionChanged();
       });
 
-      $(window).bind('hash-changed', function(_, hash) {
-        self.attemptToReloadState(hash);
+      $(window).bind('statechange', function() {
+        self.attemptToReloadState();
       });
 
       // load all accounts view
       $('#accounts .module-header :header a, #nav-accounts > a')
         .click(function(event) {
           self.selection.clear();
-          $.historyLoad('');
+          History.pushState('/accounts');
           return false;
         });
-
-      this.setUpSearch();
-
-      this.pollForRefreshAndReload();
 
       wesabe.ready('wesabe.views.widgets.accounts.__instance__', function() {
         self.setUpAccountsWidget();
@@ -101,46 +81,16 @@
         self.setUpTagsWidget();
       });
 
-      wesabe.ready('wesabe.charts.txn', function() {
-        self.setUpTxnChart();
+      shared.addSearchListener(function(query) {
+        self.onSearch(query);
       });
+
+      $(function(){ self.attemptToReloadState() });
     },
 
-    pollForRefreshAndReload: function() {
-      var self = this;
-
-      this._refreshAndReloadInterval = setInterval(function() {
-        // don't try to reload/refresh until the state has been restored from the hash
-        if (!self._hasRestoredHashState) return;
-
-        // reloads take precedence since they would cause
-        // a different set of data to be displayed, rendering
-        // refreshes useless
-        if (self._needsReload) {
-          self._needsReload = false;
-          self._needsRefresh = false;
-          self.reload();
-        }
-
-        if (self._needsRefresh) {
-          self._needsRefresh = false;
-          self.refresh();
-        }
-
-      }, 250);
-    },
-
-    setUpSearch: function() {
-      var self = this;
-
-      // enable search
-      $('#nav-search').show();
-      $("#searchform").submit(function(event) {
-        event.preventDefault();
-        $('#query').blur();
-        $.historyLoad(shared.historyHash('/search/'+$('#query').val()));
-        setTimeout(function(){ self._needsReload = true }, 0);
-      });
+    onSearch: function(query) {
+      this.search = query;
+      this.storeState();
     },
 
     setUpAccountsWidget: function() {
@@ -148,9 +98,10 @@
 
       self.accounts = wesabe.views.widgets.accounts.__instance__;
       // use the shared selection for the accounts widget's selection
-      self.accounts.setSelection(self.selection);
+      self.accounts.set('selection', self.selection);
       // wait until the accounts have loaded to try to restore selection
       function loaded() {
+        self.accounts.unbind('loaded', loaded);
         self._hasLoadedAccounts = true;
         self.attemptToReloadState();
       }
@@ -184,8 +135,8 @@
       self.transactions
         // when a transaction is added/saved, reload the list, chart, accounts, and tags
         .bind('transaction-changed', function() {
-          self.transactionsNeedRefresh();
-          self.chartNeedsRefresh();
+          self.refreshTransactions();
+          self.redrawChart();
           wesabe.data.accounts.sharedDataSource.requestData();
           wesabe.data.tags.sharedDataSource.requestData();
         })
@@ -193,7 +144,7 @@
         .kvobserve('unedited', function(_, unedited) {
           if (self.unedited !== unedited) {
             self.unedited = unedited;
-            self.storeAndReloadState();
+            self.storeState();
             self.reload();
           }
         })
@@ -201,7 +152,7 @@
         .kvobserve('offset', function(_, offset) {
           if (self.offset !== offset) {
             self.offset = offset;
-            self.storeAndReloadState();
+            self.storeState();
             self.reload();
           }
         })
@@ -218,33 +169,17 @@
           self.transactions.fn('transactions', data);
         }
       });
-
-      setInterval(function() {
-        // don't allow loading transactions until the state has been restored from the hash
-        if (!self._hasRestoredHashState) return;
-
-        if (self.shouldTransactionsBeRefreshed()) {
-          self.transactionsNeedRefresh(false);
-          self.refreshTransactions();
-        }
-
-        if (self.shouldTransactionsBeReloaded()) {
-          self.transactionsNeedReload(false);
-          self.reloadTransactions();
-        }
-      }, 250);
     },
 
     // refreshing just means repopulating the list with new data
     refreshTransactions: function() {
       var ds = this.transactions.fn('transactionDataSource');
-      ds.setParams(this.paramsForCurrentSelection());
+      ds.set('params', this.paramsForCurrentSelection());
       ds.requestData();
     },
 
-    // reloading means clearing the list and refreshing
+    // reloading means hiding the list while refreshing
     reloadTransactions: function() {
-      this.transactions.fn('transactions').fn('clear');
       this.transactions.fn('loading', true);
       this.refreshTransactions();
     },
@@ -253,46 +188,34 @@
       var self = this;
 
       function loaded() {
+        self.tags.unbind('loaded', loaded);
         self._hasLoadedTags = true;
         self.attemptToReloadState();
       }
 
       self.tags = wesabe.views.widgets.tags.__instance__;
       // use the shared selection for the tags widget's selection
-      self.tags.setSelection(self.selection);
+      self.tags.set('selection', self.selection);
       // wait until the tags have loaded to try to restore selection
       self.tags.bind('loaded', loaded);
 
       if (self.tags.hasDoneInitialLoad()) loaded();
     },
 
-    setUpTxnChart: function() {
-      var self = this;
-
-      setInterval(function() {
-        // don't allow loading the chart until the state has been restored from the hash
-        if (!self._hasRestoredHashState) return;
-
-        if (self.shouldChartBeRefreshed()) {
-          self.chartNeedsRefresh(false);
-          self.redrawChart();
-        }
-      }, 250);
-    },
-
-    attemptToReloadState: function(hash) {
+    attemptToReloadState: function(state) {
       if (this._hasLoadedAccounts && this._hasLoadedTransactions && this._hasLoadedTags) {
-        this.reloadState(hash);
+        this.reloadState(state);
       }
     },
 
-    reloadState: function(hash) {
-      hash = (hash || window.location.hash).replace(/^#/, '');
+    reloadState: function(state) {
+      var state = state || shared.parseState(),
+          path = state.path,
+          params = state.params,
 
-      var selectableObjects,
+          selectableObjects,
           selectableObjectsByURI,
 
-          hashParts = shared.historyParts(hash),
           selectedObjects = [],
           m = null,
 
@@ -304,30 +227,49 @@
 
           length;
 
-      selectableObjects = this.accounts.getSelectableObjects();
-      selectableObjects = selectableObjects.concat(this.tags.getSelectableObjects());
+      selectableObjects = this.accounts.get('selectableObjects');
+      selectableObjects = selectableObjects.concat(this.tags.get('selectableObjects'));
       length = selectableObjects.length;
 
       while (length--)
-        selectableObjects[selectableObjects[length].getURI()] = selectableObjects[length];
+        selectableObjects[selectableObjects[length].get('uri')] = selectableObjects[length];
 
-      for (var j = 0; j < hashParts.length; j++) {
-        var part = hashParts[j], selectableObject = selectableObjects[part];
+      for (var key in params) {
+        if (!params.hasOwnProperty(key)) return;
 
-        if (selectableObject) {
-          selectedObjects.push(selectableObject);
-        } else if (m = part.match(/^\/merchants\/(.*)$/)) {
-          selectedObjects.push(new wesabe.views.widgets.accounts.Merchant(m[1]));
-        } else if (part === 'unedited') {
-          unedited = true;
-        } else if (m = part.match(/^\/search\/(.+)$/)) {
-          search = m[1];
-        } else if (m = part.match(/^offset=(\d+)$/)) {
-          offset = number.parse(m[1]);
-        } else if (m = part.match(/^start=(\d+)$/)) {
-          start = date.parse(m[1]);
-        } else if (m = part.match(/^end=(\d+)$/)) {
-          end = date.parse(m[1]);
+        var value = params[key];
+        switch (key) {
+          case 'selection':
+            for (var i = 0; i < value.length; i++) {
+              var selectableObject = selectableObjects[value[i]];
+              if (selectableObject)
+                selectedObjects.push(selectableObject);
+            }
+            break;
+
+          case 'unedited':
+            unedited = (value == true) || (value == 'true');
+            break;
+
+          case 'q':
+            search = value;
+            break;
+
+          case 'offset':
+            offset = number.parse(value);
+            break;
+
+          case 'limit':
+            limit = number.parse(value);
+            break;
+
+          case 'start':
+            start = date.parse(value);
+            break;
+
+          case 'end':
+            end = date.parse(value);
+            break;
         }
       }
 
@@ -335,6 +277,11 @@
         this.unedited = unedited;
         this.transactions.fn('unedited', unedited);
       }
+
+      if (selectableObjects[path])
+        selectedObjects.push(selectableObjects[path]);
+      else if (m = path.match(/^\/merchants\/([^\/]+)$/))
+        selectedObjects.push(new wesabe.views.widgets.accounts.Merchant(m[1]));
 
       this.selection.set(selectedObjects);
 
@@ -351,52 +298,23 @@
       // restore the search term
       this.search = search;
 
-      if (!this._hasRestoredHashState) {
-        // allow updates to happen now that the hash state has been read
-        this._hasRestoredHashState = true;
-        this._needsReload = true;
-      }
-
-      $(this).trigger('state-changed');
+      this.repaint();
+      this.reload();
     },
 
     onSelectionChanged: function() {
-      // if the user didn't cause this then don't reset all the other stuff
-      if (!this._hasRestoredHashState) return;
-
-      this.resetStateWithoutReload();
-      this.storeAndReloadState();
-      this._needsReload = true;
-    },
-
-    resetStateWithoutReload: function() {
-      this.search = null;
-      this.offset = null;
-      this.limit = TRANSACTIONS_PER_PAGE;
-      this.start = null;
-      this.end = null;
-    },
-
-    storeAndReloadState: function() {
-      var state = this.storeState();
-      this.reloadState(state);
+      this.storeState();
     },
 
     reload: function() {
-      if (!this._hasRestoredHashState) return;
-
-      this.storeState();
-      this.repaint();
-      this.chartNeedsRefresh();
-      this.transactionsNeedReload();
+      this.redrawChart();
+      this.reloadTransactions();
     },
 
     refresh: function() {
-      if (!this._hasRestoredHashState) return;
-
       this.repaint();
-      this.chartNeedsRefresh();
-      this.transactionsNeedRefresh();
+      this.redrawChart();
+      this.refreshTransactions();
     },
 
     repaint: function() {
@@ -416,74 +334,55 @@
         }
       }
 
-      $('#query').val(this.search || '');
+      shared.setSearch(this.search || '');
       this.setTitleForState(accounts, groups, tags, merchants, this.search);
       this.setAddTransactionAvailabilityForState(accounts, groups, tags, merchants, this.search);
     },
 
-    transactionsNeedRefresh: function(value) {
-      if (value === undefined) value = true;
-      this._transactionsNeedRefresh = value;
-    },
-
-    shouldTransactionsBeRefreshed: function() {
-      return this._transactionsNeedRefresh;
-    },
-
-    transactionsNeedReload: function(value) {
-      if (value === undefined) value = true;
-      this._transactionsNeedReload = value;
-    },
-
-    shouldTransactionsBeReloaded: function() {
-      return this._transactionsNeedReload;
-    },
-
-    chartNeedsRefresh: function(value) {
-      if (value === undefined) value = true;
-      this._chartNeedsRefresh = value;
-    },
-
-    shouldChartBeRefreshed: function() {
-      return this._chartNeedsRefresh;
-    },
-
     storeState: function() {
-      var tokens = [], selection = this.selection.get();
+      var path = '/accounts',
+          params = {},
+          selection = this.selection.get();
 
       // handle the selection
-      for (var i = 0; i < selection.length; i++) {
-        tokens.push(selection[i].getURI());
+      if (selection.length == 1) {
+        path = selection[0].get('uri');
+      } else if (selection.length > 1) {
+        params.selection = [];
+        for (var i = 0; i < selection.length; i++) {
+          params.selection.push(selection[i].get('uri'));
+        }
       }
 
-      if (this.search)
-        tokens.push('/search/'+this.search);
+      if (this.search) {
+        path = '/accounts/search';
+        params.q = this.search;
+      }
 
       // handle the unedited flag
       if (this.unedited)
-        tokens.push('unedited');
+        params.unedited = true;
 
       if (this.offset)
-        tokens.push('offset='+this.offset);
+        params.offset = this.offset;
 
       if (this.start)
-        tokens.push('start='+date.toParam(this.start));
+        params.start = date.toParam(this.start);
 
       if (this.end)
-        tokens.push('end='+date.toParam(this.end));
+        params.end = date.toParam(this.end);
 
-      var entry = shared.historyHash(tokens);
-
+      var state = {path: path, params: params};
       // create the history entry
-      $.historyLoad(entry);
+      shared.pushState(state);
 
-      return entry;
+      return state;
     },
 
     setTitleForState: function(accounts, groups, tags, merchants, search) {
       var title = null, subtitle = null;
       var quote = function(item) {
-        if (typeof item != 'string') item = item.getName();
+        if (typeof item != 'string') item = item.get('name');
         return '“'+item+'”'
       };
 
@@ -520,9 +419,9 @@
           $.each(groups, function(i, group){ $.merge(accounts, $(group).fn('items')) });
           accountsDisplay.push($.unique(accounts).length + ' Accounts');
         } else if (accounts.length) {
-          accountsDisplay.push(accounts[0].getName());
+          accountsDisplay.push(accounts[0].get('name'));
         } else if (groups.length) {
-          accountsDisplay.push(groups[0].getName())
+          accountsDisplay.push(groups[0].get('name'))
           accountsDisplay.push('Account Group');
         }
 
@@ -563,26 +462,28 @@
     },
 
     redrawChart: function() {
+      if (!wesabe.charts || !wesabe.charts.txn) {
+        var self = this;
+        wesabe.ready('wesabe.charts.txn', function(){ self.redrawChart(); });
+        return;
+      }
+
       var chart = wesabe.charts.txn;
       chart.params = this.paramsForCurrentSelection();
 
-      if (this.search) chart.hide();
-      else {
-        var account = page.selection.getByClass(wesabe.views.widgets.accounts.Account)[0];
-        if (account && account.isInvestment()) {
-          chart.hide();
-          this.displayInvestmentHeader(account);
-        }
-        else {
-          $("#investment-header").hide();
-          chart.redraw();
-          chart.show();
-        }
+      var account = page.selection.getByClass(wesabe.views.widgets.accounts.Account)[0];
+      if (account && account.isInvestment()) {
+        chart.hide();
+        this.displayInvestmentHeader(account);
+      } else {
+        $("#investment-header").hide();
+        chart.redraw();
+        chart.show();
       }
     },
 
     displayInvestmentHeader: function(account) {
-      var positions = account.getInvestmentPositions();
+      var positions = account.get('investmentPositions');
       $("#investment-positions .position").remove();
       for (i = 0; i < positions.length; i++) {
         var position = positions[i];
@@ -603,7 +504,7 @@
         $("#investment-positions tr.header").after(row);
       }
 
-      var availableCash = account.getInvestmentBalance("available-cash");
+      var availableCash = account.get('investmentBalance', "available-cash");
       if (availableCash) {
         $("#available-cash").html(availableCash.display)
         $("tr.available-cash").show();
@@ -611,8 +512,8 @@
         $("tr.available-cash").hide();
       }
 
-      $("#market-value").html(account.getMarketValue().display);
-      $("#account-value").html(account.getBalance().display);
+      $("#market-value").html(account.get('marketValue').display);
+      $("#account-value").html(account.get('balance').display);
       $("#investment-header").show();
     },
 
@@ -626,8 +527,8 @@
         var selectedObject = selection[length];
         if (jQuery.isFunction(selectedObject.toParams))
           params = params.concat(selectedObject.toParams());
-        if (jQuery.isFunction(selectedObject.getCurrencies))
-          currencies = currencies.concat(selectedObject.getCurrencies());
+        try { currencies = currencies.concat(selectedObject.get('currencies')); }
+        catch (e) {}
       }
 
       if (this.start && this.end) {
@@ -635,25 +536,21 @@
         params.push({name: 'end', value: date.toParam(this.end)});
       }
 
-      if (this.search) {
+      if (this.search != null)
         params.push({name: 'query', value: this.search});
-        // searching requires an offset and a limit, so always give it something
-        params.push({name: 'offset', value: this.offset || 0});
-        params.push({name: 'limit', value: this.limit || TRANSACTIONS_PER_PAGE});
-      } else {
-        // when not searching we don't necessarily need offset and limit
-        if (this.offset !== null)
-          params.push({name: 'offset', value: this.offset});
-        if (this.limit !== null)
-          params.push({name: 'limit', value: this.limit});
-      }
+
+      // when not searching we don't necessarily need offset and limit
+      if (this.offset !== null)
+        params.push({name: 'offset', value: this.offset});
+      if (this.limit !== null)
+        params.push({name: 'limit', value: this.limit});
 
       params.push({name: 'unedited', value: this.unedited ? 'true' : 'false'});
 
       currencies = array.uniq(currencies);
       params.currency = (currencies.length == 1) ?
                           currencies[0] :
-                          wesabe.data.preferences.getDefaultCurrency();
+                          wesabe.data.preferences.defaultCurrency();
 
       return params;
     }

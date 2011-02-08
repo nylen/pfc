@@ -8,7 +8,7 @@ jQuery(function($) {
   var prefs = wesabe.data.preferences;
   var root = $('#spending-summary');
 
-  var defaultCurrency = prefs.getDefaultCurrency();
+  var defaultCurrency = prefs.defaultCurrency();
 
   var ZERO_SUMMARY = { count: 0, value: 0, display: money.format(0, {currency: defaultCurrency}) };
 
@@ -38,23 +38,45 @@ jQuery(function($) {
           self.fn("update");
         });
 
-        $(window).bind('hash-changed', function(_, hash) {
-          self.fn("_restoreFromHash", hash);
+        $(window).bind('statechange', function() {
+          self.fn('_restoreState');
         });
 
-        if (window.location.hash) {
-          self.fn("_restoreFromHash", window.location.hash);
-        } else {
-          $.historyLoad("spending");
-        }
+        var state = History.getState(),
+            path  = state && state.url || window.location.pathname;
+
+        if (path == "/trends") History.pushState(null, null, "/trends/spending");
+        else self.fn('_restoreState');
+
+        $('#trends-summary li a').each(function() {
+          new wesabe.views.widgets.HistoryLink($(this));
+        });
 
         return self;
       },
 
-      _restoreFromHash: function(hash) {
-        var match = hash.match(/spending|earnings/);
-        if (match)
-          $(this).fn("spendingOrEarnings", match[0]);
+      _restoreState: function() {
+        var state = History.getState(),
+            path  = state && state.url || window.location.pathname,
+            match = path.match(/\/trends\/(spending|earnings)$/),
+            mode = match && match[1];
+
+        if (mode) {
+          $(this).fn("spendingOrEarnings", mode);
+
+          $('#trends-summary li').each(function() {
+            var li = $(this);
+            if (li.hasClass(mode)) li.addClass('on');
+            else li.removeClass('on');
+          });
+
+          var viewportMinY = document.body.scrollTop,
+              viewportMaxY = viewportMinY + window.innerHeight,
+              destination = $('#spending-summary').offset().top;
+
+          if (destination < viewportMinY || destination > viewportMaxY)
+            $("body:not(:animated)").animate({ scrollTop: destination-20}, 500 );
+        }
       },
 
       title: function() {
@@ -580,7 +602,7 @@ jQuery(function($) {
             .add($('.tag-bar-spent', self));
 
           clickables.click(function() {
-            shared.navigateTo('/accounts#/tags/'+self.fn("data")["name"].replace(/\s/g, '%20'));
+            shared.navigateTo('/tags/'+encodeURIComponent(self.fn("data")["name"].replace(/\s/g, '%20')));
           });
           // </HACK>
 

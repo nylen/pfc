@@ -4,18 +4,32 @@
 wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $package) {
   // import jQuery as $
   var $ = jQuery;
+  // import wesabe.lang.number
+  var number = wesabe.lang.number;
 
   $.extend($class.prototype, {
-    _element: null,
-    _contentElement: null,
+    element: null,
     _childWidgets: null,
 
-    init: function(element) {
-      this._element = element;
-    },
+    width: null,
+    height: null,
+    padding: null,
 
-    getElement: function() {
-      return this._element;
+    needsRedraw: false,
+    _redrawTimeout: null,
+
+    init: function(element) {
+      this.set('element', element);
+      element = this.get('element');
+
+      this.width = element.width();
+      this.height = element.height();
+      this.padding = {
+        top: number.parse(element.css('padding-top')) || 0,
+        right: number.parse(element.css('padding-right')) || 0,
+        bottom: number.parse(element.css('padding-bottom')) || 0,
+        left: number.parse(element.css('padding-left')) || 0
+      };
     },
 
     /**
@@ -23,43 +37,40 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      *
      * @returns {Element}
      */
-    getContentElement: function() {
-      return this._contentElement || this.getElement();
+    contentElement: function() {
+      return this._contentElement || this.get('element');
     },
 
     /**
-     * Sets the element to which content will be added. Set this to +null+
-     * to revert the content element back to the container element.
-     *
-     * @param {Element} element
+     * @private
      */
-    setContentElement: function(element) {
+    _setContentElement: function(element) {
       this._contentElement = element;
     },
 
-    getId: function() {
-      return this.getElement().attr('id');
+    id: function() {
+      return this.get('element').attr('id');
     },
 
     setId: function(id) {
-      this.getElement().attr('id', id);
+      this.get('element').attr('id', id);
     },
 
-    isVisible: function() {
-      return this.getElement().is(':visible');
+    visible: function() {
+      return this.get('element').is(':visible');
     },
 
     setVisible: function(visible) {
-      visible ? this.getElement().show() : this.getElement().hide();
+      visible ? this.get('element').show() : this.get('element').hide();
     },
 
     setOpacity: function(opacity, animate) {
-      var css = {opacity: opacity}, element = this.getElement().stop(true);
+      var css = {opacity: opacity}, element = this.get('element').stop(true);
       animate ? element.animate(css) : element.css(css);
     },
 
-    getPosition: function() {
-      return this.getElement().position();
+    position: function() {
+      return this.get('element').position();
     },
 
     /**
@@ -70,11 +81,107 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {?number} topDelta
      */
     alignWith: function(elementOrWidget, leftDelta, topDelta) {
-      var position = elementOrWidget.getPosition ? elementOrWidget.getPosition() :
-                                                   $(elementOrWidget).position();
+      var position = (elementOrWidget && elementOrWidget.getClass) ? elementOrWidget.get('position') :
+                                                                     $(elementOrWidget).position();
       if (leftDelta) position.left += leftDelta;
       if (topDelta) position.top += topDelta;
-      this.getElement().css(position);
+      this.get('element').css(position);
+    },
+
+    /**
+     * Redraws the widget. Override in subclasses to do something useful.
+     */
+    redraw: function() {
+      this.get('element').css({
+        width: this.get('contentWidth'),
+        height: this.get('contentHeight'),
+        'padding-top': this.padding.top+'px',
+        'padding-right': this.padding.right+'px',
+        'padding-bottom': this.padding.bottom+'px',
+        'padding-left': this.padding.left+'px'
+      });
+    },
+
+    /**
+     * Notifies the widget that it needs to redraw itself, but it waits
+     * for the currently executing javascript to return control first.
+     *
+     * @param {boolean} needsRedraw
+     */
+    setNeedsRedraw: function(needsRedraw) {
+      if (this._redrawTimeout)
+        clearTimeout(this._redrawTimeout);
+
+      if (needsRedraw) {
+        var self = this;
+        this._redrawTimeout = setTimeout(function(){ self.redraw(); }, 0);
+      }
+    },
+
+    /**
+     * Left offset of the content rect.
+     *
+     * @return {number}
+     */
+    contentLeft: function() {
+      return this.padding.left;
+    },
+
+    /**
+     * Top of the content rect.
+     *
+     * @return {number}
+     */
+    contentTop: function() {
+      return this.padding.top;
+    },
+
+    /**
+     * Width of the content rect.
+     *
+     * @return {number}
+     */
+    contentWidth: function() {
+      return this.width - this.padding.left - this.padding.right;
+    },
+
+    /**
+     * Height of the content rect.
+     *
+     * @return {number}
+     */
+    contentHeight: function() {
+      return this.height - this.padding.top - this.padding.bottom;
+    },
+
+    /**
+     * Sets this widget's width.
+     *
+     * @param {number} width
+     */
+    setWidth: function(width) {
+      this.width = width;
+      this.setNeedsRedraw(true);
+    },
+
+    /**
+     * Sets this widget's height.
+     *
+     * @param {number} height
+     */
+    setHeight: function(height) {
+      this.height = height;
+      this.setNeedsRedraw(true);
+    },
+
+    /**
+     * Sets this widget's padding.
+     *
+     * @param {number} padding
+     */
+    setPadding: function(padding) {
+      this.padding = padding;
+      this.setNeedsRedraw(true);
     },
 
     /**
@@ -121,8 +228,8 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * Removes this widget and its children from the DOM.
      */
     remove: function() {
-      if (this._element)
-        this._element.remove();
+      if (this.element)
+        this.element.remove();
       this.destroy();
     },
 
@@ -157,10 +264,10 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!jQuery} element
      */
     appendTo: function(element) {
-      if (element.getElement)
-        element = element.getElement();
+      if (element.get('element'))
+        element = element.get('element');
       this._willMoveToParent(element);
-      this._element.appendTo(element);
+      this.element.appendTo(element);
       this._didMoveToParent();
     },
 
@@ -170,10 +277,10 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!jQuery} element
      */
     prependTo: function(element) {
-      if (element.getElement)
-        element = element.getElement();
+      if (element.get('element'))
+        element = element.get('element');
       this._willMoveToParent(element);
-      this._element.prependTo(element);
+      this.element.prependTo(element);
       this._didMoveToParent();
     },
 
@@ -183,10 +290,10 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!jQuery} element
      */
     insertAfter: function(element) {
-      if (element.getElement)
-        element = element.getElement();
+      if (element.get('element'))
+        element = element.get('element');
       this._willMoveToParent(element.parent());
-      this._element.insertAfter(element);
+      this.element.insertAfter(element);
       this._didMoveToParent();
     },
 
@@ -196,10 +303,10 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!jQuery} element
      */
     insertBefore: function(element) {
-      if (element.getElement)
-        element = element.getElement();
+      if (element.get('element'))
+        element = element.get('element');
       this._willMoveToParent(element.parent());
-      this._element.insertBefore(element);
+      this.element.insertBefore(element);
       this._didMoveToParent();
     },
 
@@ -221,7 +328,7 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!BaseWidget} widget
      */
     appendChildWidget: function(widget) {
-      widget.appendTo(this.getContentElement());
+      widget.appendTo(this.get('contentElement'));
       this.registerChildWidget(widget);
     },
 
@@ -231,7 +338,7 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!BaseWidget} widget
      */
     prependChildWidget: function(widget) {
-      widget.prependTo(this.getContentElement());
+      widget.prependTo(this.get('contentElement'));
       this.registerChildWidget(widget);
     },
 
@@ -241,7 +348,7 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!Element} element
      */
     appendElement: function(element) {
-      this.getContentElement().append(element);
+      this.get('contentElement').append(element);
     },
 
     /**
@@ -250,30 +357,30 @@ wesabe.$class('wesabe.views.widgets.BaseWidget', function($class, $super, $packa
      * @param {!Element} element
      */
     prependElement: function(element) {
-      this.getContentElement().prepend(element);
+      this.get('contentElement').prepend(element);
     },
 
     /**
      * Determines whether this widget is attached to an HTML document.
      */
     isAttached: function() {
-      return this._element &&
-             this._element.length &&
-             this._element.parent('html').length;
+      return this.element &&
+             this.element.length &&
+             this.element.parent('html').length;
     },
 
     /**
      * Adds +className+ to this widget's element.
      */
     addClassName: function(className) {
-      this._element.addClass(className);
+      this.element.addClass(className);
     },
 
     /**
      * Removes +className+ from this widget's element.
      */
     removeClassName: function(className) {
-      this._element.removeClass(className);
+      this.element.removeClass(className);
     }
   });
 });

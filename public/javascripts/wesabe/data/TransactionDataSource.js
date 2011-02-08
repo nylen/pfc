@@ -7,11 +7,9 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
   var prefs = wesabe.data.preferences;
 
   $.extend($class.prototype, {
-    _params: null,
-
     init: function(params) {
       if (params)
-        this.setParams(params);
+        this.set('params', params);
     },
 
     /**
@@ -20,15 +18,13 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      * @return {string}
      * @override
      */
-    getSourceURI: function() {
+    sourceURI: function() {
       // REVIEW: I'm sure this is not the right way to do this, but it works
       var accountSelections = page.selection.getByClass(wesabe.views.widgets.accounts.Account);
-      if (this.isSearch())
-        return '/accounts/search'
-      else if (accountSelections[0] && accountSelections[0].isInvestment()) // main selection needs to be investment account
-        return '/data/investment-transactions/'+this._getCurrency();
+      if (accountSelections[0] && accountSelections[0].isInvestment()) // main selection needs to be investment account
+        return '/data/investment-transactions/'+this.get('currency');
       else
-        return '/data/transactions/'+this._getCurrency();
+        return '/data/transactions/'+this.get('currency');
     },
 
     /**
@@ -37,9 +33,9 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      * @return {jQuery.ajax.data}
      * @override
      */
-    getRequestOptions: function() {
-      return $.extend($super.getRequestOptions.call(this), {
-        data: this.getRequestQueryParams()
+    requestOptions: function() {
+      return $.extend($super.requestOptions.call(this), {
+        data: this.requestQueryParams()
       });
     },
 
@@ -48,8 +44,8 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      *
      * @private
      */
-    _getCurrency: function() {
-      return this._params && this._params.currency || prefs.getDefaultCurrency();
+    _currency: function() {
+      return this._params && this._params.currency || prefs.defaultCurrency();
     },
 
     /**
@@ -57,7 +53,7 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      *
      * @return {jQuery.ajax.data}
      */
-    getParams: function() {
+    params: function() {
       return this._params && lang.params.copy(this._params);
     },
 
@@ -75,25 +71,8 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      *
      * @return {jQuery.ajax.data}
      */
-    getRequestQueryParams: function() {
-      var params = this.getParams();
-
-      if (!this.isSearch())
-        return params;
-
-      // ask for the right data type
-      lang.params.set(params, 'format', this.getDataType());
-
-      // pfc expects q=, not query=
-      lang.params.set(params, 'q', lang.params.get(params, 'query'));
-      lang.params.remove(params, 'query');
-
-      // pfc expects a page number, not offset/limit
-      lang.params.set(params, 'page', this._getPageNumber());
-      lang.params.remove(params, 'offset');
-      lang.params.remove(params, 'limit');
-
-      return params;
+    requestQueryParams: function() {
+      return this.get('params');
     },
 
     /**
@@ -101,7 +80,7 @@ wesabe.$class('wesabe.data.TransactionDataSource', wesabe.data.BaseDataSource, f
      *
      * @private
      */
-    _getPageNumber: function() {
+    _pageNumber: function() {
       return Math.floor(lang.params.get(this._params, 'offset') / lang.params.get(this._params, 'limit')) + 1;
     },
 

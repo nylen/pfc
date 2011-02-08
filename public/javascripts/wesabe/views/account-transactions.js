@@ -29,7 +29,7 @@ jQuery(function($) {
           new wesabe.views.widgets.Button(self.find("#all-transactions-button"), /* unedited = */ false),
           new wesabe.views.widgets.Button(self.find("#unedited-transactions-button"), /* unedited = */ true)], {
             onSelectionChange: function(sender, selectedButton) {
-              self.kvo('unedited', selectedButton.getValue());
+              self.kvo('unedited', selectedButton.get('value'));
             }
         }));
 
@@ -95,7 +95,7 @@ jQuery(function($) {
           });
 
           $('.date-range-detail .left-arrow, .prev-date-range', root).click(function() {
-            var txactions = transactionDataSource.getData();
+            var txactions = transactionDataSource.get('data');
             var total = (txactions && txactions.count && txactions.count.total) || 0;
             var newOffset = root.fn('offset') + root.fn('limit');
 
@@ -187,7 +187,7 @@ jQuery(function($) {
 
           var nextLink = $('.next-date-range, .right-arrow', root),
               prevLink = $('.prev-date-range, .left-arrow', root),
-              txactions = transactionDataSource.getData(),
+              txactions = transactionDataSource.get('data'),
               offset = root.fn('offset'),
               limit = root.fn('limit'),
               total = (txactions && txactions.count && txactions.count.total) || 0;
@@ -273,15 +273,14 @@ jQuery(function($) {
       uri:            $.getsetdata('uri'),
       amount:         $.getsetdata('amount'),
       account:        $.getsetdata('account'),
-      'check-number': $.getsetdata('check-number'),
 
       merchant: $.getset({
-        get: function() { return $(this).data('widget').getMerchant(); },
+        get: function() { return $(this).data('widget').get('merchant'); },
         set: function(data, getset) {
           var self = $(this),
               widget = self.data('widget');
 
-          widget.setMerchant(data);
+          widget.set('merchant', data);
           $('.merchant-info', self)
             .unbind('click')
             .click(function() {
@@ -300,12 +299,9 @@ jQuery(function($) {
         self.children('.edit').click(function(){
           self.fn('startEdit'); });
 
-        $('.check-number', self)
-          .kvobind(self, 'check-number', {property: 'text', transform: function(c){ return c ? (' — Check #'+c) : '' }});
-
         $('.account-name', self)
           .click(function(event) {
-            $.historyLoad(self.fn('account').uri);
+            History.pushState(null, null, self.fn('account').uri);
             event.preventDefault();
           });
 
@@ -324,7 +320,7 @@ jQuery(function($) {
         }
 
         var transactionTags = data.tags,
-            tagSelection = $.map(selection.getByClass(wesabe.views.widgets.TagListItem), function(t){ return t.getName() });
+            tagSelection = $.map(selection.getByClass(wesabe.views.widgets.TagListItem), function(t){ return t.get('name') });
 
         // show the split amounts if the tags we've selected have splits
         if (tagSelection.length > 0 && transactionTags.length > 0) {
@@ -357,30 +353,26 @@ jQuery(function($) {
         self
           .fn('uri', data['uri'])
           .fn('amount', data['amount'])
-          .fn('merchant', merchant)
-          .fn('check-number', data['check-number'] || null)
           .fn('account', data['account'])
           .fn('attachments', data['attachments'] || []);
 
         var widget = self.data('widget');
 
-        widget.setURI(data['id']);
-        widget.setNote(data['note']);
-        widget.setDate(data['date']);
+        widget.set('uri', data['id']);
+        widget.set('note', data['note']);
+        widget.set('date', data['date']);
+        widget.set('checkNumber', data['check-number']);
 
-        widget.setAccount(data['account']);
-        widget.setAccountVisible(!selectingSingleAccount);
-        widget.setBalance(data['balance']);
+        widget.set('account', data['account']);
+        widget.set('accountVisible', !selectingSingleAccount);
+        widget.set('balance', data['balance']);
         // Cash accounts shouldn't have balances
         if (data['account'].type == "Cash")
-          widget.setBalanceText(selectingSingleAccount ? '' : 'n/a');
-        widget.setAmount(data['display-amount'] || data['amount']);
-        widget.setTags(data['tags']);
-        widget.setTransfer(data['transfer'] || null);
-        // widget.setMerchant(data['merchant']);
-
-        var toEdit = !(merchant && merchant.name && widget.getTags().length > 0);
-        self.toggleClass('to-edit', toEdit);
+          widget.set('balanceText', selectingSingleAccount ? '' : 'n/a');
+        widget.set('amount', data['display-amount'] || data['amount']);
+        widget.set('tags', data['tags']);
+        widget.set('transfer', data['transfer'] || null);
+        widget.set('merchant', merchant);
 
         return self;
       },
@@ -457,9 +449,10 @@ jQuery(function($) {
       }),
 
       uneditedName: function() {
-        var self = $(this);
-        var uneditedName = self.fn('merchant').uneditedName;
-        var checkNumber = self.fn('check-number');
+        var self = $(this),
+            widget = self.data('widget'),
+            uneditedName = widget.get('merchant').uneditedName,
+            checkNumber = widget.get('checkNumber');
 
         if ((checkNumber && checkNumber.length > 0) || uneditedName.length > 0) {
           var originalNameParts = [];
@@ -534,7 +527,7 @@ jQuery(function($) {
         var selection = root.fn('selection').get();
         self.kvobserve('account', function(_, a) {
           if (a.uri) {
-            var accounts = wesabe.data.accounts.sharedDataSource.getData().accounts;
+            var accounts = wesabe.data.accounts.sharedDataSource.get('data').accounts;
             for (var i = accounts.length; i--;) {
               if (accounts[i].uri === a.uri) {
                 a = accounts[i];
@@ -550,7 +543,7 @@ jQuery(function($) {
 
         $('.account-name', self)
           .click(function(event) {
-            $.historyLoad(self.fn('account').uri);
+            History.pushState(null, null, self.fn('account').uri);
             event.preventDefault();
           });
 
@@ -617,25 +610,25 @@ jQuery(function($) {
                   self.data('fn.amount') ? self.fn('amount').value :
                                            null;
           if (amount)
-            tagAutocompleterField.setSplitAutocompletionTotal(number.parse(amount));
+            tagAutocompleterField.set('splitAutocompletionTotal', number.parse(amount));
         }
 
         amountField.bind('change', recomputeSplitTotal);
         recomputeSplitTotal();
 
         // bind the date picker
-        $('.date-edit', edit_box).datepicker()
-          .val(wesabe.lang.date.format(widget.getDate(), 'yyyy-MM-dd'));
+        var dateVal = wesabe.lang.date.format((widget && widget.get('date') ? widget.get('date') : new Date()), 'yyyy-MM-dd');
+	$('.date-edit', edit_box).datepicker().val(dateVal);
 
         // bind the merchant autocompleter
         self.fn('startMerchantAutocomplete');
 
         // toggle the merchant icons
         self.find('form div.merchant-icons').removeClass('on');
-        if (widget.getTags().length > 0) self.find('form div.merchant-icons.tags').addClass('on tags-on');
-        if (widget.getNote() && widget.getNote().length > 0) self.find('form div.merchant-icons.notes').addClass('on notes-on');
+        if (widget && widget.get('tags').length > 0) self.find('form div.merchant-icons.tags').addClass('on tags-on');
+        if (widget && widget.get('note') && widget.get('note').length > 0) self.find('form div.merchant-icons.notes').addClass('on notes-on');
         if (self.fn('attachments').length > 0) self.find('form div.merchant-icons.attachments').addClass('on attachments-on');
-        if (widget.isTransfer()) self.find('form div.merchant-icons.transfer').addClass('on transfer-on');
+        if (widget && widget.isTransfer()) self.find('form div.merchant-icons.transfer').addClass('on transfer-on');
 
         // bind the tabs to show the content divs when clicked
         $('a.edit-dialog-inset-tab', edit_box).click(function(){
@@ -690,13 +683,15 @@ jQuery(function($) {
       },
 
       startMerchantAutocomplete: function() {
-        var self = $(this);
-        var options = {};
+        var self = $(this),
+            widget = self.data('widget'),
+            options = {};
+
         if (!self.hasClass("add-transaction")) {
-          var checkNumber = self.fn("check-number");
+          var checkNumber = widget.get("checkNumber");
           var merchant = self.fn("merchant");
           // show Happy Magic Check Autocomplete if this is a check and it is unedited
-          if (checkNumber && checkNumber.length > 0 && !merchant.id) {
+          if (checkNumber && checkNumber.length > 0 && !widget.get('unedited')) {
             options.showChecks = true;
             options.txactionURI = self.fn("uri");
           }
@@ -714,8 +709,8 @@ jQuery(function($) {
 
         // REVIEW: kvobind the template fields to the txaction object?
         $('.name-edit', edit_box).val(
-          self.fn('merchant').name || self.fn('merchant').suggestedName);
-        if (self.fn('merchant').name) {
+          widget.get('merchant').name || widget.get('merchant').suggestedName);
+        if (widget.get('merchant').name) {
           setTimeout(function(){ self.fn('populateAutotagEdit') }, 150);
           setTimeout(function(){ self.fn('populateMerchantDefaults') }, 150);
         }
@@ -741,13 +736,13 @@ jQuery(function($) {
         $('.delete.button', self).show()
           .click(function(){self.fn('destroy');});
 
-        $('textarea[name=note]', edit_box).val(widget.getNote() || '');
+        $('textarea[name=note]', edit_box).val(widget.get('note') || '');
 
         var attachmentList = $('.inset-tab-text div.attachments-list', self);
         attachmentList.empty().append(self.fn('attachmentListItems', true));
 
         $('.transfer-details input[type=checkbox]', edit_box)
-          .attr('id', 'is_transfer_' + widget.getURI())
+          .attr('id', 'is_transfer_' + widget.get('uri'))
           .attr('checked', widget.isTransfer())
           .click(function(){
             if ($(this).attr('checked')) {
@@ -791,12 +786,6 @@ jQuery(function($) {
 
             if (data['suggested-tags'] && data['suggested-tags'].length)
               self.fn('showSuggestedTags', data['suggested-tags']);
-
-            // FIXME: update the rating here
-            // var rating = defaults['rating'];
-            // if (rating) {
-            //   txaction.setDefaultRating(txid, rating.value);
-            // }
           },
           error: function(error) {
             wesabe.error("Failed to get merchant defaults: ", error);
@@ -834,7 +823,7 @@ jQuery(function($) {
 
       populateAutotagEdit: function(merchantId) {
         var self = $(this);
-        merchantId = merchantId || self.fn('merchant').id;
+        merchantId = merchantId || widget.get('merchant').id;
         var sign = -1;
         if (!self.hasClass("add-transaction") && self.fn('amount').value > 0) {
           sign = 1;
@@ -925,41 +914,43 @@ jQuery(function($) {
 
       saveEdit: function() {
         var self = $(this),
-            widget = self.data('widget');
+            widget = self.data('widget'),
+            doneSaving = false;
 
-        var editing = !!widget.getURI();
+        var editing = widget && widget.get('uri');
         var form = $('form:first', self);
         if (editing) {
           form.append('<input type="hidden" name="_method" value="PUT">');
         }
         form.ajaxSubmit({
-            url: self.fn('uri'),
-            type: editing ? "PUT" : "POST",
-            dataType: "json",
-            beforeSend: function(xhr) {
-               xhr.setRequestHeader('Accept', 'application/json');
-            },
-            beforeSubmit: function() {
-              $('.edit-dialog .error-message', self).slideUp("normal");
-              $('.edit-dialog', self).slideUp("slow", function(){
-                $('img.uploading-spinner', self).show();
-                if(root.fn('unedited')) self.next().fn('startEdit');
-              });
+          url: self.fn('uri'),
+          type: editing ? "PUT" : "POST",
+          dataType: "json",
+          beforeSend: function(xhr) {
+             xhr.setRequestHeader('Accept', 'application/json');
+          },
+          beforeSubmit: function() {
+            $('.edit-dialog .error-message', self).slideUp("normal");
+            $('.edit-dialog', self).slideUp("slow", function(){
+              if (!doneSaving) $('img.uploading-spinner', self).show();
+              if(root.fn('unedited')) self.next().fn('startEdit');
+            });
 
-              // TODO: add live-validation callbacks here so that you can't submit
-              //   the form if the data is invalid
-            },
-            error: function() {
-              $('.edit-dialog .error-message', self).slideDown('normal');
-            },
-            success: function(data) {
-              self.fn('teardownEdit')
-              root.trigger('transaction-changed', [self]);
-            },
-            complete: function() {
-              $('img.uploading-spinner', self).hide();
-            }
-          });
+            // TODO: add live-validation callbacks here so that you can't submit
+            //   the form if the data is invalid
+          },
+          error: function() {
+            $('.edit-dialog .error-message', self).slideDown('normal');
+          },
+          success: function(data) {
+            self.fn('teardownEdit')
+            root.trigger('transaction-changed', [self]);
+          },
+          complete: function() {
+            doneSaving = true;
+            $('img.uploading-spinner', self).hide();
+          }
+        });
       },
 
       showDeleted: function () {
@@ -1032,7 +1023,7 @@ jQuery(function($) {
     account: $.getsetdata('account'),
     uri: function() {
       var account = $(this).fn('account');
-      return account.getTransactionsURI();
+      return account.get('transactionsURI');
     },
     tags: function() { return []; },
     notes: function() { return null; },

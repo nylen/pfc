@@ -8,10 +8,15 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
   var number = wesabe.lang.number;
 
   $.extend($class.prototype, {
-    _uri: null,
+    /**
+     * URI of this transaction if it has one.
+     */
+    uri: null,
 
     _noteContainerElement: null,
     _noteLabel: null,
+
+    _checkNumberLabel: null,
 
     _balanceLabel: null,
     _amountLabel: null,
@@ -43,6 +48,13 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
       this._noteContainerElement = element.find('.notes');
       this._noteLabel = new wesabe.views.widgets.Label(this._noteContainerElement.find('.text-content'));
       this.registerChildWidget(this._noteLabel);
+
+      this._checkNumberLabel = new wesabe.views.widgets.Label(element.find('.check-number'), {
+                                 format: function(c) {
+                                   return c ? (' — Check #'+c) : '';
+                                 }
+                               });
+      this.registerChildWidget(this._checkNumberLabel);
 
       this._balanceLabel = new wesabe.views.widgets.MoneyLabel(element.find('.balance'));
       this._amountLabel = new wesabe.views.widgets.MoneyLabel(element.find('.amount'));
@@ -82,15 +94,6 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
     },
 
     /**
-     * Gets the uri of this transaction if it has one.
-     *
-     * @return {number}
-     */
-    getURI: function() {
-      return this._uri;
-    },
-
-    /**
      * Sets the uri of this transaction if it has one.
      *
      * @param {?String} uri
@@ -105,7 +108,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @return {?string}
      */
     getNote: function() {
-      return this._noteLabel.getValue();
+      return this._noteLabel.get('value');
     },
 
     /**
@@ -156,11 +159,11 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @param {object} merchant
      */
     setMerchant: function(merchant) {
-      var unedited = !merchant.name;
+      var unedited = !merchant || !merchant.name;
 
       this._merchant = merchant;
       this._merchantLink.setURI(unedited ? null : wesabe.views.shared.historyHash('/merchants/'+merchant.name));
-      this._merchantLink.setText(merchant.name || merchant.uneditedName);
+      this._merchantLink.setText(merchant && (merchant.name || merchant.uneditedName));
       this.setUnedited(unedited);
     },
 
@@ -170,7 +173,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @return {date}
      */
     getDate: function() {
-      return this._dateLabel.getValue();
+      return this._dateLabel.get('value');
     },
 
     /**
@@ -188,7 +191,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @return {object}
      */
     getAccount: function() {
-      return this._accountLabel.getValue();
+      return this._accountLabel.get('value');
     },
 
     /**
@@ -199,8 +202,8 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
     setAccount: function(account) {
       account = account && this._getAccountDataByURI(account.uri);
       this._account = account;
-      this._accountLabel.setValue(account);
-      this._accountLabel.setURI(account && account.uri);
+      this._accountLabel.set('value', account);
+      this._accountLabel.set('uri', account && account.uri);
     },
 
     /**
@@ -208,8 +211,8 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      *
      * @return {boolean}
      */
-    isAccountVisible: function() {
-      return this._accountLabel.isVisible();
+    accountVisible: function() {
+      return this._accountLabel.get('visible');
     },
 
     /**
@@ -218,7 +221,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @param {!boolean} visible
      */
     setAccountVisible: function(visible) {
-      this._accountLabel.setVisible(visible);
+      this._accountLabel.set('visible', visible);
     },
 
     /**
@@ -226,8 +229,8 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      *
      * @return {object}
      */
-    getBalance: function() {
-      return this._balanceLabel.getMoney();
+    balance: function() {
+      return this._balanceLabel.get('money');
     },
 
     /**
@@ -236,7 +239,25 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @param {?string|object} balance
      */
     setBalance: function(balance) {
-      this._balanceLabel.setMoney(balance || {display: 'n/a'});
+      this._balanceLabel.set('money', balance || {display: 'n/a'});
+    },
+
+    /**
+     * Returns the check number for this transaction or null if there is none.
+     *
+     * @return {?string}
+     */
+    checkNumber: function() {
+      return this._checkNumberLabel.get('value');
+    },
+
+    /**
+     * Sets the check number for this transaction, if it has one.
+     *
+     * @param {?string} checkNumber
+     */
+    setCheckNumber: function(checkNumber) {
+      this._checkNumberLabel.set('value', checkNumber);
     },
 
     /**
@@ -254,7 +275,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
      * @return {object}
      */
     getAmount: function() {
-      return this._amountLabel.getMoney();
+      return this._amountLabel.get('money');
     },
 
     /**
@@ -286,8 +307,10 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
       this._unedited = unedited;
       if (this._unedited) {
         this._merchantInfoElement.addClass('unedited');
+        this.addClassName('unedited');
       } else {
         this._merchantInfoElement.removeClass('unedited');
+        this.removeClassName('unedited');
       }
     },
 
@@ -323,7 +346,7 @@ wesabe.$class('wesabe.views.widgets.transactions.Transaction', wesabe.views.widg
       } else {
         this._transferContainerElement.addClass('on transfer-on');
 
-        var thisAccount = this.getAccount(),
+        var thisAccount = this.get('account'),
             otherAccount = transfer.account;
 
         thisAccount = thisAccount && this._getAccountDataByURI(thisAccount.uri);

@@ -1,6 +1,14 @@
 class TagsController < ApplicationController
   before_filter :check_authentication
 
+  def show
+    if tag
+      render :action => 'accounts/index'
+    else
+      redirect_to accounts_url
+    end
+  end
+
   def destroy
     if tag
       Tag.destroy(current_user, tag)
@@ -13,6 +21,17 @@ class TagsController < ApplicationController
   def update
     if tag
       Tag.rename(current_user, tag, params[:replacement_tags])
+    end
+  end
+
+  def update
+    if tag.nil?
+      render :nothing => true, :status => :not_found
+    elsif replacement_tags = params[:replacement_tags]
+      Tag.replace(current_user, tag, replacement_tags)
+      render :nothing => true, :status => :ok
+    else
+      render :nothing => true, :status => :bad_request
     end
   end
 

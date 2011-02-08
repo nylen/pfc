@@ -142,6 +142,7 @@ class UploadsController < ApplicationController
         end
       else # QIF upload...need to get more info
         # store the upload data in a temp file and go get more info
+        FileUtils.mkdir_p(ApiEnv::PATH[:upload_temp_dir])
         tempfile = File.open(TempfilePath.generate('upload', ApiEnv::PATH[:upload_temp_dir]), "w")
         Marshal.dump(upload, tempfile)
         tempfile.close
@@ -211,7 +212,7 @@ private
   end
 
   def account
-    @account ||= current_user.accounts.find_by_uri(params.delete(:account_uri))
+    @account ||= current_user.active_account_by_uri_for_user(params.delete(:account_uri))
   end
 
   def require_ac

@@ -13,7 +13,6 @@ end
 
 gem 'chronic',           '0.2.3'
 gem 'fastercsv'
-gem 'riddle'
 gem 'memcache-client',              :require => 'memcache'
 gem 'mime-types',                   :require => 'mime/types'
 gem 'rest-client',                  :require => 'rest_client'
@@ -31,8 +30,7 @@ end
 
 group :test do
   gem 'webmock'
-  gem 'rspec-rails',     '>= 2.0.0.beta.17'
-  gem 'rspec',           '>= 2.0.0.beta.17'
+  gem 'rspec-rails',     '>= 2.0.1'
   gem 'ruby-debug'
   gem 'machinist'
   gem 'faker'

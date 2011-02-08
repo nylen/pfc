@@ -3,13 +3,14 @@
  */
 wesabe.$class('wesabe.views.widgets.tags.TagEditDialogPanel', wesabe.views.widgets.BaseWidget, function($class, $super, $package) {
   $.extend($class.prototype, {
+    enabled: true,
+
+    _tags: null,
     _tagEditDialog: null,
     _confirmButton: null,
     _cancelButton: null,
     _tagNameLabel: null,
     _newTagsLabel: null,
-    _tags: null,
-    _enabled: true,
 
     init: function(element, tagEditDialog) {
       $super.init.call(this, element);
@@ -26,36 +27,32 @@ wesabe.$class('wesabe.views.widgets.tags.TagEditDialogPanel', wesabe.views.widge
     },
 
     onBeginEdit: function(tagListItem) {
-      this._tagNameLabel.text('“'+tagListItem.getName()+'”');
+      this._tagNameLabel.text('“'+tagListItem.get('name')+'”');
     },
 
     onEndEdit: function() {
       // nothing to do
     },
 
-    isEnabled: function() {
-      return this._enabled;
-    },
-
     setEnabled: function(enabled) {
-      if (this._enabled === enabled)
+      if (this.enabled === enabled)
         return;
 
-      this._enabled = enabled;
-      this._confirmButton.setEnabled(enabled);
+      this.enabled = enabled;
+      this._confirmButton.set('enabled', enabled);
     },
 
     animateVisible: function(visible, callback) {
       var me = this;
 
-      if (visible !== me.isVisible())
-        me.getElement().slideToggle(function() {
-          me.setVisible(visible)
+      if (visible !== me.get('visible'))
+        me.get('element').slideToggle(function() {
+          me.set('visible', visible);
           callback && callback();
         });
     },
 
-    getTags: function() {
+    tags: function() {
       return this._tags;
     },
 
@@ -80,7 +77,7 @@ wesabe.$class('wesabe.views.widgets.tags.TagEditDialogPanel', wesabe.views.widge
     },
 
     setConfirmButtonText: function(text) {
-      this._confirmButton.setText(text);
+      this._confirmButton.set('text', text);
     }
   });
 });

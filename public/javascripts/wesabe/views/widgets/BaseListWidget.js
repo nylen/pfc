@@ -9,13 +9,18 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
   var array = wesabe.lang.array;
 
   $.extend($class.prototype, {
-    _items: null,
+    /**
+     * true if zebra striping is enabled, false otherwise.
+     *
+     * @type {boolean}
+     */
+    stripingEnabled: false,
+
     _listElement: null,
-    _stripingEnabled: false,
 
     init: function(element, listElement) {
       $super.init.call(this, element);
-      this.setListElement(listElement);
+      this.set('listElement', listElement);
     },
 
     /**
@@ -23,8 +28,8 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      *
      * @return {element}
      */
-    getListElement: function() {
-      return this._listElement || this.getElement();
+    listElement: function() {
+      return this._listElement || this.get('element');
     },
 
     /**
@@ -44,11 +49,12 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      * @return {BaseWidget}
      */
     getItemByElement: function(element) {
-      var items = this.getItems(),
+      var items = this.get('items'),
           length = items.length;
 
       while (length--)
-        if ($.same(element, items[length].getElement())) return items[length];
+        if ($.same(element, items[length].get('element')))
+          return items[length];
 
       return null;
     },
@@ -61,11 +67,12 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      * @return {BaseWidget}
      */
     getItemByURI: function(uri) {
-      var items = this.getItems(),
+      var items = this.get('items'),
           length = items.length;
 
       while (length--)
-        if (items[length].getURI() === uri) return items[length];
+        if (items[length].get('uri') === uri)
+          return items[length];
 
       return null;
     },
@@ -75,7 +82,7 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      *
      * @return {Array.<BaseWidget>}
      */
-    getItems: function() {
+    items: function() {
       if (!this._items) {
         this._items = [];
       }
@@ -89,7 +96,20 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      * @return {BaseWidget}
      */
     getItem: function(index) {
-      return this.getItems()[index];
+      return this.get('items')[index];
+    },
+
+    /**
+     * Removes the item at +index+.
+     */
+    removeItemAtIndex: function(index) {
+      var items = this.get('items'),
+          length = items.length;
+
+      for (var i = index; i < length-1; i++)
+        items[i] = items[i+1];
+
+      items.length--;
     },
 
     /**
@@ -100,10 +120,10 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
      */
     setItems: function(items) {
       var elements = [],
-          stripe = this.isStripingEnabled();
+          stripe = this.get('stripingEnabled');
 
       for (var i = items.length; i--;) {
-        var element = items[i].getElement();
+        var element = items[i].get('element');
         if (stripe) {
           var isEven = i % 2 == 0;
           element.addClass(isEven ? 'even' : 'odd')
@@ -118,40 +138,21 @@ wesabe.$class('wesabe.views.widgets.BaseListWidget', wesabe.views.widgets.BaseWi
             this._items[i].remove();
 
       this._items = items;
-      //$(elements).appendTo(this.getListElement());
-      this.getListElement().append(elements);
-    },
-
-    /**
-     * Returns true if zebra striping is enabled, false otherwise.
-     *
-     * @return {boolean}
-     */
-    isStripingEnabled: function() {
-      return this._stripingEnabled;
-    },
-
-    /**
-     * Sets whether to use zebra striping (alternate "even" and "odd" classes).
-     *
-     * @param {boolean} stripingEnabled Whether or not to use striping.
-     */
-    setStripingEnabled: function(stripingEnabled) {
-      this._stripingEnabled = stripingEnabled;
+      this.get('listElement').append(elements);
     },
 
     /**
      * Removes the existing child items from this list and from the DOM.
      */
     clear: function() {
-      var items = this.getItems(),
+      var items = this.get('items'),
           length = items.length;
 
       // prevent multiple reflows by hiding, clearing, then showing
-      this.setVisible(false);
+      this.set('visible', false);
       while (length--)
         items.shift().remove();
-      this.setVisible(true);
+      this.set('visible', true);
     },
 
     /**
